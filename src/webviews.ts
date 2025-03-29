@@ -162,7 +162,7 @@ export async function showSubmissionDetails(
         codeContent = await apiClient.getSubmissionCode(submission.code_url);
         panel.webview.html = getSubmissionHtml(
           submission,
-          escapeHtml(codeContent),
+          codeContent,
           panel.webview,
           context.extensionUri
         );
@@ -750,9 +750,9 @@ function getSubmissionHtml(
 function escapeHtml(unsafe: string | null | undefined): string {
   if (unsafe === null || unsafe === undefined) return "";
   return unsafe
-    .replace(/&/g, "&")
-    .replace(/</g, "<")
-    .replace(/>/g, ">")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
