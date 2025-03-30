@@ -89,13 +89,15 @@
           "id": "acmojProblemsets",
           "name": "Problemsets",
           "type": "tree",
-          "contextualTitle": "ACMOJ Problemsets"
+          "contextualTitle": "ACMOJ Problemsets",
+          "icon": "$(tasklist)"
         },
         {
           "id": "acmojSubmissions",
           "name": "My Submissions",
           "type": "tree",
-          "contextualTitle": "ACMOJ Submissions"
+          "contextualTitle": "ACMOJ Submissions",
+          "icon": "$(tasklist)"
         }
       ]
     },
