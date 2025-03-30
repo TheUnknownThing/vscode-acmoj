@@ -3,15 +3,22 @@ import { ApiClient } from '../api'
 import { SubmissionBrief, SubmissionStatus } from '../types'
 import { AuthService } from '../auth'
 
+// Union type for tree items
+export type SubmissionViewItem = SubmissionTreeItem | NavigationTreeItem
+
 export class SubmissionProvider
-  implements vscode.TreeDataProvider<SubmissionTreeItem>
+  implements vscode.TreeDataProvider<SubmissionViewItem>
 {
   private _onDidChangeTreeData: vscode.EventEmitter<
-    SubmissionTreeItem | undefined | null | void
-  > = new vscode.EventEmitter<SubmissionTreeItem | undefined | null | void>()
+    SubmissionViewItem | undefined | null | void
+  > = new vscode.EventEmitter<SubmissionViewItem | undefined | null | void>()
   readonly onDidChangeTreeData: vscode.Event<
-    SubmissionTreeItem | undefined | null | void
+    SubmissionViewItem | undefined | null | void
   > = this._onDidChangeTreeData.event
+
+  private currentCursor: string | undefined = undefined
+  private previousCursors: string[] = []
+  private hasNextPage: boolean = false
 
   constructor(
     private apiClient: ApiClient,
@@ -24,19 +31,49 @@ export class SubmissionProvider
     this._onDidChangeTreeData.fire()
   }
 
-  getTreeItem(element: SubmissionTreeItem): vscode.TreeItem {
+  // Reset pagination to first page
+  resetPagination(): void {
+    this.currentCursor = undefined
+    this.previousCursors = []
+    this.hasNextPage = false
+    this.refresh()
+  }
+
+  // Navigate to next page
+  nextPage(): void {
+    if (this.hasNextPage) {
+      this.refresh()
+    } else {
+      vscode.window.showInformationMessage('No more pages available.')
+    }
+  }
+
+  // Navigate to previous page
+  previousPage(): void {
+    if (this.previousCursors.length > 1) {
+      this.previousCursors.pop()
+      this.currentCursor = this.previousCursors.pop()
+      this.refresh()
+    } else {
+      vscode.window.showInformationMessage('No previous pages available.')
+      this.currentCursor = undefined
+      this.previousCursors = []
+    }
+  }
+
+  getTreeItem(element: SubmissionViewItem): vscode.TreeItem {
     return element
   }
 
   async getChildren(
-    element?: SubmissionTreeItem,
-  ): Promise<SubmissionTreeItem[]> {
+    element?: SubmissionViewItem,
+  ): Promise<SubmissionViewItem[]> {
     if (!this.authService.isLoggedIn()) {
       return [
-        new vscode.TreeItem(
+        new SubmissionTreeItem(
+          {} as SubmissionBrief,
           'Please login to view submissions',
-          vscode.TreeItemCollapsibleState.None,
-        ) as SubmissionTreeItem,
+        ),
       ]
     }
 
@@ -44,32 +81,110 @@ export class SubmissionProvider
       return []
     } else {
       try {
-        // get the first page of submissions
+        // Get the current page of submissions
         const profile = await this.apiClient.getUserProfile()
         const username = profile.username
-        const { submissions } = await this.apiClient.getSubmissions(
-          undefined,
+        // console.log('Fetching submissions at cursor:', this.currentCursor)
+        const { submissions, next } = await this.apiClient.getSubmissions(
+          this.currentCursor,
           username,
         )
-        return submissions.map((s) => new SubmissionTreeItem(s))
-        // TODO: implement pagination
+
+        // Parse the next cursor from the URL
+        const nextCursor = next ? new URLSearchParams(next).get('cursor') : null
+        this.hasNextPage = Boolean(nextCursor)
+        if (nextCursor) {
+          this.previousCursors.push(this.currentCursor || '')
+        }
+        this.currentCursor = nextCursor || undefined
+        // console.log('Current cursor:', this.currentCursor)
+
+        const result: SubmissionViewItem[] = submissions.map(
+          (s) => new SubmissionTreeItem(s),
+        )
+
+        // Add navigation controls
+        if (this.previousCursors.length > 1) {
+          result.unshift(
+            new NavigationTreeItem('Previous Page', 'previous-page'),
+          )
+          result.unshift(
+            new NavigationTreeItem('Back to First Page', 'back-to-first-page'),
+          )
+        }
+
+        if (this.hasNextPage) {
+          result.push(new NavigationTreeItem('Next Page', 'next-page'))
+        }
+
+        return result
       } catch (error: any) {
         vscode.window.showErrorMessage(
           `Failed to load submissions: ${error.message}`,
         )
         return [
-          new vscode.TreeItem(
+          new SubmissionTreeItem(
+            {} as SubmissionBrief,
             `Error: ${error.message}`,
-            vscode.TreeItemCollapsibleState.None,
-          ) as SubmissionTreeItem,
+          ),
         ]
       }
     }
   }
 }
 
+// Navigation item for pagination
+export class NavigationTreeItem extends vscode.TreeItem {
+  constructor(
+    label: string,
+    public readonly navigationAction:
+      | 'next-page'
+      | 'previous-page'
+      | 'back-to-first-page',
+  ) {
+    super(label, vscode.TreeItemCollapsibleState.None)
+
+    let icon: vscode.ThemeIcon
+    let commandId: string
+
+    switch (navigationAction) {
+      case 'next-page':
+        icon = new vscode.ThemeIcon('arrow-right')
+        commandId = 'acmoj.submissionNextPage'
+        break
+      case 'previous-page':
+        icon = new vscode.ThemeIcon('arrow-left')
+        commandId = 'acmoj.submissionPreviousPage'
+        break
+      case 'back-to-first-page':
+        icon = new vscode.ThemeIcon('arrow-up')
+        commandId = 'acmoj.submissionBackToFirstPage'
+        break
+    }
+
+    this.iconPath = icon
+
+    this.command = {
+      command: commandId,
+      title: label,
+      arguments: [],
+    }
+
+    this.contextValue = 'navigation-item'
+  }
+}
+
 export class SubmissionTreeItem extends vscode.TreeItem {
-  constructor(public readonly submission: SubmissionBrief) {
+  constructor(
+    public readonly submission: SubmissionBrief,
+    errorMessage?: string,
+  ) {
+    if (errorMessage) {
+      // For error messages or placeholders
+      super(errorMessage, vscode.TreeItemCollapsibleState.None)
+      return
+    }
+
     const problemTitle =
       submission.problem?.title || `Problem ${submission.problem?.id || '?'}`
     const date = new Date(submission.created_at).toLocaleString()
@@ -92,6 +207,7 @@ export class SubmissionTreeItem extends vscode.TreeItem {
       }
     }
     this.iconPath = SubmissionTreeItem.getIconForStatus(submission.status)
+    this.contextValue = 'submission-item'
   }
 
   static getIconForStatus(status: SubmissionStatus): vscode.ThemeIcon {
@@ -103,13 +219,17 @@ export class SubmissionTreeItem extends vscode.TreeItem {
         )
       case 'wrong_answer':
       case 'runtime_error':
-      case 'memory_leak':
       case 'bad_problem':
       case 'unknown_error':
       case 'system_error':
         return new vscode.ThemeIcon(
           'error',
           new vscode.ThemeColor('testing.iconFailed'),
+        )
+      case 'memory_leak':
+        return new vscode.ThemeIcon(
+          'error',
+          new vscode.ThemeColor('testing.iconErrored'),
         )
       case 'compile_error':
         return new vscode.ThemeIcon(

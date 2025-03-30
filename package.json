@@ -2,7 +2,7 @@
   "name": "vscode-acmoj",
   "displayName": "ACMOJ Helper",
   "description": "View problems, submit code, and check results for ACMOJ.",
-  "version": "0.2.7",
+  "version": "0.2.10",
   "publisher": "TheUnknownThing",
   "contributors": [
     {
@@ -164,7 +164,7 @@
     "watch:esbuild": "esbuild src/extension.ts --bundle --platform=node --outdir=out --external:vscode --watch",
     "lint": "eslint src --ext ts",
     "lint:fix": "eslint src --ext ts --fix",
-    "format": "prettier --write src/**/*.ts",
+    "format": "prettier --write \"src/**/*.ts\" \"src/*.ts\"",
     "prepare": "husky install"
   },
   "dependencies": {

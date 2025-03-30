@@ -72,13 +72,11 @@ This extension contributes the following settings (accessible via `File > Prefer
 
 ## Known Issues
 
-*  Pagination for problemsets and submissions is not yet implemented (only shows the first page).
 *  Error handling can be improved for edge cases.
+*  API rate limits may affect viewing problemsets or submissions. **(Major Issue)**
 
 ## TODO
 
-*   Implement pagination for problemsets and submissions.
-*   Add display for the description of the problemset.
 *   Add support for submitting file in the problem view.
 
 ## Contributing
