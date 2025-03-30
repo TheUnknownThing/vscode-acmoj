@@ -2,7 +2,7 @@
   "name": "vscode-acmoj",
   "displayName": "ACMOJ Helper",
   "description": "View problems, submit code, and check results for ACMOJ.",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "publisher": "TheUnknownThing",
   "contributors": [
     {
@@ -23,6 +23,7 @@
     "url": "https://github.com/TheUnknownThing/vscode-acmoj.git"
   },
   "license": "MIT",
+  "icon": "static/logo.png",
   "engines": {
     "vscode": "^1.98.0"
   },
