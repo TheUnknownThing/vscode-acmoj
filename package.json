@@ -66,7 +66,8 @@
       },
       {
         "command": "acmoj.submitCurrentFile",
-        "title": "ACMOJ: Submit Current File"
+        "title": "ACMOJ: Submit Current File",
+        "icon": "$(cloud-upload)"
       },
       {
         "command": "acmoj.abortSubmission",
