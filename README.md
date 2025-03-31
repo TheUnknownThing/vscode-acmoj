@@ -86,6 +86,8 @@ This extension contributes the following settings (accessible via `File > Prefer
 ## TODO
 
 *   Add support for submitting file in the problem view.
+*   Open the problem in the editor when clicking it in submission view.
+*   Add filter and search functionality in the submission view.
 
 ## Contributing
 
