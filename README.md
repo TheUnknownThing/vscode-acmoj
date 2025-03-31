@@ -81,7 +81,7 @@ This extension contributes the following settings (accessible via `File > Prefer
 ## Known Issues
 
 *  Error handling can be improved for edge cases.
-*  API rate limits may affect viewing problemsets or submissions. **(Major Issue)**
+*  API rate limits may affect viewing problemsets or submissions. **(Major Issue)** Now, we use a cache to store the problemset and submission data for 15 minutes. This should help reduce the number of API calls and avoid rate limits.
 
 ## TODO
 
