@@ -12,15 +12,25 @@ import {
 } from './types'
 import * as querystring from 'querystring'
 import * as https from 'https'
+import { CacheService } from './cache'
 
 export class ApiClient {
   private axiosInstance: AxiosInstance
   private authService: AuthService
+  private cacheService: CacheService
+  private retryCount: number = 3
+  private retryDelay: number = 1000
 
   constructor(authService: AuthService) {
     this.authService = authService
+    this.cacheService = new CacheService(15) // Default 15 minutes TTL
+
     const config = vscode.workspace.getConfiguration('acmoj')
     const baseUrl = config.get<string>('baseUrl', 'https://acm.sjtu.edu.cn')
+
+    // Get retry settings from configuration
+    this.retryCount = config.get<number>('apiRetryCount', 3)
+    this.retryDelay = config.get<number>('apiRetryDelay', 1000)
 
     const httpsAgent = new https.Agent({
       rejectUnauthorized: true,
@@ -90,6 +100,73 @@ export class ApiClient {
       },
     )
   }
+
+  // Request method with retry mechanism
+  private async requestWithRetry<T>(
+    method: string,
+    url: string,
+    options: any = {},
+  ): Promise<T> {
+    let lastError: Error | null = null
+    let attempt = 0
+
+    while (attempt < this.retryCount) {
+      try {
+        let response
+        if (method.toLowerCase() === 'get') {
+          response = await this.axiosInstance.get(url, options)
+        } else if (method.toLowerCase() === 'post') {
+          response = await this.axiosInstance.post(
+            url,
+            options.data,
+            options.config,
+          )
+        }
+        return response?.data
+      } catch (error: any) {
+        lastError = error
+
+        // Don't retry for 401 errors or other specific client errors
+        if (
+          error.response?.status === 401 ||
+          (error.response?.status >= 400 && error.response?.status < 500)
+        ) {
+          break
+        }
+
+        attempt++
+        if (attempt < this.retryCount) {
+          // Wait before retrying
+          await new Promise((resolve) =>
+            setTimeout(resolve, this.retryDelay * attempt),
+          )
+          console.log(`Request retry ${attempt}/${this.retryCount}: ${url}`)
+        }
+      }
+    }
+
+    throw (
+      lastError ||
+      new Error('Request failed, please check your network connection')
+    )
+  }
+
+  // Clear all cache
+  clearCache() {
+    this.cacheService.clear()
+    console.log('All cache cleared')
+  }
+
+  // Get cache service instance
+  getCacheService(): CacheService {
+    return this.cacheService
+  }
+
+  // Set cache TTL
+  setCacheTTL(ttlMinutes: number) {
+    this.cacheService = new CacheService(ttlMinutes)
+  }
+
   // --- Problem Endpoints ---
 
   async getProblems(
@@ -97,40 +174,73 @@ export class ApiClient {
     keyword?: string,
     problemsetId?: number,
   ): Promise<{ problems: ProblemBrief[]; next: string | null }> {
-    const params: Record<string, any> = {}
-    if (cursor) params.cursor = cursor
-    if (keyword) params.keyword = keyword
-    if (problemsetId) params.problemset_id = problemsetId
+    const cacheKey = `problems:${cursor || ''}:${keyword || ''}:${problemsetId || ''}`
 
-    const response = await this.axiosInstance.get<{
-      problems: ProblemBrief[]
-      next: string | null
-    }>('/problem/', { params })
-    return response.data
+    return this.cacheService.getOrFetch(
+      cacheKey,
+      async () => {
+        const params: Record<string, any> = {}
+        if (cursor) params.cursor = cursor
+        if (keyword) params.keyword = keyword
+        if (problemsetId) params.problemset_id = problemsetId
+
+        const response = await this.requestWithRetry<{
+          problems: ProblemBrief[]
+          next: string | null
+        }>('get', '/problem/', { params })
+        return response
+      },
+      5,
+    ) // Cache for 5 minutes
   }
 
   async getProblemDetails(problemId: number): Promise<Problem> {
-    const response = await this.axiosInstance.get<Problem>(
-      `/problem/${problemId}`,
-    )
-    return response.data
+    const cacheKey = `problem:${problemId}`
+
+    return this.cacheService.getOrFetch(
+      cacheKey,
+      async () => {
+        const response = await this.requestWithRetry<Problem>(
+          'get',
+          `/problem/${problemId}`,
+        )
+        return response
+      },
+      30,
+    ) // Cache for 30 minutes, problem content rarely changes
   }
 
   // --- Problemset Endpoints ---
 
   async getUserProblemsets(): Promise<{ problemsets: Problemset[] }> {
-    // API spec shows /user/problemsets returns { problemsets: [...] }
-    const response = await this.axiosInstance.get<{
-      problemsets: Problemset[]
-    }>('/user/problemsets')
-    return response.data
+    const cacheKey = `user:problemsets`
+
+    return this.cacheService.getOrFetch(
+      cacheKey,
+      async () => {
+        const response = await this.requestWithRetry<{
+          problemsets: Problemset[]
+        }>('get', '/user/problemsets')
+        return response
+      },
+      15,
+    ) // Cache for 15 minutes
   }
 
   async getProblemsetDetails(problemsetId: number): Promise<Problemset> {
-    const response = await this.axiosInstance.get<Problemset>(
-      `/problemset/${problemsetId}`,
-    )
-    return response.data
+    const cacheKey = `problemset:${problemsetId}`
+
+    return this.cacheService.getOrFetch(
+      cacheKey,
+      async () => {
+        const response = await this.requestWithRetry<Problemset>(
+          'get',
+          `/problemset/${problemsetId}`,
+        )
+        return response
+      },
+      20,
+    ) // Cache for 20 minutes
   }
 
   // --- Submission Endpoints ---
@@ -141,12 +251,21 @@ export class ApiClient {
     code: string,
     isPublic: boolean = false,
   ): Promise<{ id: number }> {
-    const response = await this.axiosInstance.post<{ id: number }>(
+    const response = await this.requestWithRetry<{ id: number }>(
+      'post',
       `/problem/${problemId}/submit`,
-      querystring.stringify({ language, code, public: isPublic }),
-      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+      {
+        data: querystring.stringify({ language, code, public: isPublic }),
+        config: {
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        },
+      },
     )
-    return response.data
+
+    // Clear submission cache because there is a new submission
+    this.clearSubmissionsCache()
+
+    return response
   }
 
   async getSubmissions(
@@ -156,49 +275,101 @@ export class ApiClient {
     status?: string,
     lang?: string,
   ): Promise<{ submissions: SubmissionBrief[]; next: string | null }> {
-    const params: Record<string, any> = {}
-    if (cursor) params.cursor = cursor
-    if (username) params.username = username
-    if (problemId) params.problem_id = problemId
-    if (status) params.status = status
-    if (lang) params.lang = lang
+    const cacheKey = `submissions:${cursor || ''}:${username || ''}:${problemId || ''}:${status || ''}:${lang || ''}`
 
-    const response = await this.axiosInstance.get<{
-      submissions: SubmissionBrief[]
-      next: string | null
-    }>('/submission/', { params })
-    return response.data
+    return this.cacheService.getOrFetch(
+      cacheKey,
+      async () => {
+        const params: Record<string, any> = {}
+        if (cursor) params.cursor = cursor
+        if (username) params.username = username
+        if (problemId) params.problem_id = problemId
+        if (status) params.status = status
+        if (lang) params.lang = lang
+
+        const response = await this.requestWithRetry<{
+          submissions: SubmissionBrief[]
+          next: string | null
+        }>('get', '/submission/', { params })
+        return response
+      },
+      2,
+    ) // Cache for only 2 minutes, submission status changes quickly
   }
 
   async getSubmissionDetails(submissionId: number): Promise<Submission> {
-    const response = await this.axiosInstance.get<Submission>(
-      `/submission/${submissionId}`,
-    )
-    return response.data
+    const cacheKey = `submission:${submissionId}`
+
+    return this.cacheService.getOrFetch(
+      cacheKey,
+      async () => {
+        const response = await this.requestWithRetry<Submission>(
+          'get',
+          `/submission/${submissionId}`,
+        )
+        return response
+      },
+      5,
+    ) // Cache for 5 minutes
   }
 
   async getSubmissionCode(codeUrl: string): Promise<string> {
-    try {
-      const response = await axios.get<string>(codeUrl, {
-        baseURL: this.axiosInstance.defaults.baseURL?.replace('/api/v1', ''),
-      })
-      return response.data
-    } catch (error) {
-      console.error(`Failed to fetch code from ${codeUrl}:`, error)
-      throw new Error('Failed to fetch submission code.')
-    }
+    const cacheKey = `submissionCode:${codeUrl}`
+
+    return this.cacheService.getOrFetch(
+      cacheKey,
+      async () => {
+        try {
+          const response = await axios.get<string>(codeUrl, {
+            baseURL: this.axiosInstance.defaults.baseURL?.replace(
+              '/api/v1',
+              '',
+            ),
+          })
+          return response.data
+        } catch (error) {
+          console.error(`Failed to fetch code from ${codeUrl}:`, error)
+          throw new Error('Failed to fetch submission code.')
+        }
+      },
+      30,
+    ) // Cache for 30 minutes, code content doesn't change
   }
 
   async abortSubmission(submissionId: number): Promise<void> {
-    // API returns 204 on No Content
-    await this.axiosInstance.post(`/submission/${submissionId}/abort`)
+    // No cache, direct operation
+    await this.requestWithRetry<void>(
+      'post',
+      `/submission/${submissionId}/abort`,
+    )
+
+    // Clear submission cache
+    this.clearSubmissionsCache()
+    this.cacheService.delete(`submission:${submissionId}`)
+  }
+
+  private clearSubmissionsCache() {
+    // Delete all cache entries that start with 'submissions:'
+    this.cacheService.deleteWithPrefix('submissions:')
+    // Delete all cache entries that start with 'submission:'
+    this.cacheService.deleteWithPrefix('submission:')
   }
 
   // --- User Endpoints ---
   async getUserProfile(): Promise<Profile> {
-    // Return specific Profile type
-    const response = await this.axiosInstance.get<Profile>('/user/profile')
-    return response.data
+    const cacheKey = 'user:profile'
+
+    return this.cacheService.getOrFetch(
+      cacheKey,
+      async () => {
+        const response = await this.requestWithRetry<Profile>(
+          'get',
+          '/user/profile',
+        )
+        return response
+      },
+      15,
+    ) // Cache for 15 minutes
   }
 
   // --- Course Endpoints ---

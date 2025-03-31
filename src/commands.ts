@@ -377,6 +377,23 @@ export function registerCommands(
         )
       },
     ),
+
+    vscode.commands.registerCommand('acmoj.clearCache', async () => {
+      const confirmation = await vscode.window.showWarningMessage(
+        'Are you sure you want to clear all cached data? This will refresh all problem and submission data.',
+        { modal: true },
+        'Confirm',
+        'Cancel',
+      )
+
+      if (confirmation === 'Confirm') {
+        apiClient.clearCache()
+        vscode.window.showInformationMessage('All cache data has been cleared')
+        // Refresh views
+        problemsetProvider.refresh()
+        submissionProvider.refresh()
+      }
+    }),
   )
 }
 

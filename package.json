@@ -44,6 +44,10 @@
         "title": "ACMOJ: Clear Personal Access Token"
       },
       {
+        "command": "acmoj.clearCache",
+        "title": "ACMOJ: Clear Cache Data"
+      },
+      {
         "command": "acmoj.showMyProfile",
         "title": "ACMOJ: Show My Profile"
       },
@@ -113,6 +117,11 @@
           "command": "acmoj.refreshSubmissions",
           "when": "view == acmojSubmissions",
           "group": "navigation"
+        },
+        {
+          "command": "acmoj.clearCache",
+          "when": "view == acmojProblemsets || view == acmojSubmissions",
+          "group": "9_cutomization@1"
         }
       ],
       "editor/title": [
@@ -129,6 +138,10 @@
         },
         {
           "command": "acmoj.clearToken",
+          "when": "acmoj.loggedIn"
+        },
+        {
+          "command": "acmoj.clearCache",
           "when": "acmoj.loggedIn"
         },
         {
@@ -170,6 +183,7 @@
   "dependencies": {
     "@vscode/markdown-it-katex": "^1.1.1",
     "axios": "^1.0.0",
+    "axios-retry": "^4.5.0",
     "katex": "^0.16.21",
     "markdown-it": "^13.0.1"
   },
