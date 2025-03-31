@@ -156,3 +156,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 *   Fixed the issue where clicking the refresh button in the submission view would automatically jump to the next page.
+
+## [0.3.0] - 2025-3-31
+
+### Added
+
+*   Added cache for api requests, with a default expiration time of 15 minutes, which significantly improves user experience.
