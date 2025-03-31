@@ -23,6 +23,14 @@ This extension allows you to browse problemsets (contests/homework), view proble
 *   **Submission Tracking:** View your recent submissions in a dedicated Tree View, including status, language, and time. Status icons provide quick feedback.
 *   **Result Details:** Click on a submission to view detailed results, resource usage, judge messages, and your submitted code in a Webview.
 
+## Screenshots
+
+Full procedure of viewing problem, submitting code, and checking submission results.
+![Full Procedure](static/full-procedure.gif)
+
+Problemset Tree View with joined contests and homework assignments.
+![Problemset Tree View](static/problemset-tree-view.gif)
+
 ## Requirements
 
 *   Visual Studio Code v1.98.0 or higher.
