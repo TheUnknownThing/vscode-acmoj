@@ -29,6 +29,7 @@ export function registerCommands(
 
     vscode.commands.registerCommand('acmoj.clearToken', async () => {
       await authService.clearToken()
+      apiClient.clearCache()
       problemsetProvider.refresh()
       submissionProvider.refresh()
     }),

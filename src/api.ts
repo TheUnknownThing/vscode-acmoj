@@ -297,6 +297,11 @@ export class ApiClient {
     ) // Cache for only 2 minutes, submission status changes quickly
   }
 
+  async expireSubmissionCache(submissionId: number): Promise<void> {
+    const cacheKey = `submission:${submissionId}`
+    this.cacheService.delete(cacheKey)
+  }
+
   async getSubmissionDetails(submissionId: number): Promise<Submission> {
     const cacheKey = `submission:${submissionId}`
 

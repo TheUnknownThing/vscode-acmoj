@@ -98,13 +98,20 @@ export class SubmissionProvider
           username,
         )
 
-        // Parse the next page cursor, but do not update currentCursor here
+        for (const submission of submissions) {
+          if (
+            submission.status === 'pending' ||
+            submission.status === 'compiling' ||
+            submission.status === 'judging'
+          ) {
+            this.apiClient.expireSubmissionCache(submission.id)
+          }
+        }
+
         this.nextPageCursor = next
           ? new URLSearchParams(next).get('cursor') || undefined
           : undefined
         this.hasNextPage = Boolean(this.nextPageCursor)
-
-        // No longer update currentCursor here.
 
         const result: SubmissionViewItem[] = submissions.map(
           (s) => new SubmissionTreeItem(s),
