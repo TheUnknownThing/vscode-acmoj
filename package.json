@@ -165,6 +165,26 @@
           "type": "string",
           "default": "https://acm.sjtu.edu.cn",
           "description": "Base URL for the ACMOJ API."
+        },
+        "acmoj.apiRetryCount": {
+          "type": "number",
+          "default": 3,
+          "description": "Number of times to retry failed API requests."
+        },
+        "acmoj.apiRetryDelay": {
+          "type": "number",
+          "default": 1000,
+          "description": "Delay in milliseconds between API retry attempts."
+        },
+        "acmoj.submissionMonitorInterval": {
+          "type": "number",
+          "default": 3000,
+          "description": "Interval in milliseconds for checking submission status updates."
+        },
+        "acmoj.submissionMonitorTimeout": {
+          "type": "number",
+          "default": 120000,
+          "description": "Maximum time in milliseconds to monitor a submission before timing out."
         }
       }
     }

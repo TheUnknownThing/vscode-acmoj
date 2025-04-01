@@ -4,15 +4,17 @@ import { ApiClient } from './api'
 import { ProblemsetProvider } from './views/problemsetProvider'
 import { SubmissionProvider } from './views/submissionProvider'
 import { registerCommands } from './commands'
+import { SubmissionMonitorService } from './submissionMonitor'
 import { Profile } from './types'
 
 let authService: AuthService
 let apiClient: ApiClient
 let problemsetProvider: ProblemsetProvider
 let submissionProvider: SubmissionProvider
+let submissionMonitor: SubmissionMonitorService
 let statusBarItem: vscode.StatusBarItem
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   console.log('Congratulations, your extension "vscode-acmoj" is now active!')
 
   authService = new AuthService(context)
@@ -20,6 +22,12 @@ export function activate(context: vscode.ExtensionContext) {
 
   problemsetProvider = new ProblemsetProvider(apiClient, authService)
   submissionProvider = new SubmissionProvider(apiClient, authService)
+
+  // Create submission monitoring service
+  submissionMonitor = new SubmissionMonitorService(
+    apiClient,
+    submissionProvider,
+  )
 
   vscode.window.registerTreeDataProvider('acmojProblemsets', problemsetProvider)
   vscode.window.registerTreeDataProvider('acmojSubmissions', submissionProvider)
@@ -33,6 +41,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   authService.onDidChangeLoginStatus((loggedIn) => {
     updateStatusBar(loggedIn ? authService.getProfile() : null)
+    vscode.commands.executeCommand('setContext', 'acmoj.loggedIn', loggedIn)
   })
   authService.onDidChangeProfile((profile) => {
     updateStatusBar(profile)
@@ -45,10 +54,17 @@ export function activate(context: vscode.ExtensionContext) {
     apiClient,
     problemsetProvider,
     submissionProvider,
+    submissionMonitor,
   )
 
   context.subscriptions.push(authService)
 
+  vscode.commands.executeCommand(
+    'setContext',
+    'acmoj.loggedIn',
+    authService.isLoggedIn(),
+  )
+  
   if (authService.isLoggedIn()) {
     problemsetProvider.refresh()
     submissionProvider.refresh()
