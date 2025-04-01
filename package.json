@@ -2,7 +2,7 @@
   "name": "vscode-acmoj",
   "displayName": "ACMOJ Helper",
   "description": "View problems, submit code, and check results for ACMOJ.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "publisher": "TheUnknownThing",
   "contributors": [
     {

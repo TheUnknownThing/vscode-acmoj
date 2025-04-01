@@ -57,9 +57,9 @@ export class SubmissionProvider
 
   // Navigate to previous page
   previousPage(): void {
-    if (this.previousCursors.length > 1) {
+    if (this.previousCursors.length > 0) {
+      this.currentCursor = this.previousCursors[this.previousCursors.length - 1]
       this.previousCursors.pop()
-      this.currentCursor = this.previousCursors.pop()
       this.refresh()
     } else {
       vscode.window.showInformationMessage('No previous pages available.')
@@ -110,14 +110,19 @@ export class SubmissionProvider
           (s) => new SubmissionTreeItem(s),
         )
 
-        // Add navigation controls
-        if (this.previousCursors.length > 1) {
+        if (this.previousCursors.length > 0) {
           result.unshift(
             new NavigationTreeItem('Previous Page', 'previous-page'),
           )
-          result.unshift(
-            new NavigationTreeItem('Back to First Page', 'back-to-first-page'),
-          )
+
+          if (this.previousCursors.length > 1) {
+            result.unshift(
+              new NavigationTreeItem(
+                'Back to First Page',
+                'back-to-first-page',
+              ),
+            )
+          }
         }
 
         if (this.hasNextPage) {

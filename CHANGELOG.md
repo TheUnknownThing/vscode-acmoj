@@ -162,3 +162,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 *   Added cache for api requests, with a default expiration time of 15 minutes, which significantly improves user experience.
+
+## [0.3.1] - 2025-4-1
+
+### Fixed
+
+*   Fixed the issue where the `previous-page` button do not exist at page 2.
