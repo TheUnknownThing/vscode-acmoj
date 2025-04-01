@@ -175,3 +175,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 *   Fixed the cache issue where the cache was not being cleared when the token was changed.
 *   Fixed the issue where the submission status was not being updated correctly after a submission (being cached).
+
+## [0.3.3] - 2025-4-1
+
+### Fixed
+
+*   Added submissions monitor to monitor submission more precisely
+*   Fixed the cache issue where the cache was not being cleared when the token was changed.
