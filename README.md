@@ -97,4 +97,4 @@ For more details on contributing, please refer to the [CONTRIBUTING.md](CONTRIBU
 
 ## License
 
-[MIT License](LICENSE.md)
+[MIT License](LICENSE)

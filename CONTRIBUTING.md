@@ -6,46 +6,46 @@ This document provides guidelines for contributing to this project.
 
 ## Table of Contents
 
-*   [Code of Conduct](#code-of-conduct)
-*   [How Can I Contribute?](#how-can-i-contribute)
-    *   [Reporting Bugs](#reporting-bugs)
-    *   [Suggesting Enhancements](#suggesting-enhancements)
-    *   [Your First Code Contribution](#your-first-code-contribution)
-    *   [Pull Requests](#pull-requests)
-*   [Development Setup](#development-setup)
-*   [Project Structure](#project-structure)
-*   [Coding Style](#coding-style)
-*   [Testing](#testing)
+- [Code of Conduct](#code-of-conduct)
+- [How Can I Contribute?](#how-can-i-contribute)
+  - [Reporting Bugs](#reporting-bugs)
+  - [Suggesting Enhancements](#suggesting-enhancements)
+  - [Your First Code Contribution](#your-first-code-contribution)
+  - [Pull Requests](#pull-requests)
+- [Development Setup](#development-setup)
+- [Project Structure](#project-structure)
+- [Coding Style](#coding-style)
+- [Testing](#testing)
 
 ## Code of Conduct
 
-This project and everyone participating in it are governed by the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior. *(Note: You'll need to add a CODE_OF_CONDUCT.md file, the Contributor Covenant is a good standard choice)*
+This project and everyone participating in it are governed by the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior. _(Note: You'll need to add a CODE_OF_CONDUCT.md file, the Contributor Covenant is a good standard choice)_
 
 ## How Can I Contribute?
 
 ### Reporting Bugs
 
-If you find a bug, please ensure the bug was not already reported by searching on GitHub under [Issues](https://github.com/TheUnknownThing/vscode-acmoj/issues). *(Replace with your actual repo link)*
+If you find a bug, please ensure the bug was not already reported by searching on GitHub under [Issues](https://github.com/TheUnknownThing/vscode-acmoj/issues).
 
 If you're unable to find an open issue addressing the problem, [open a new one](https://github.com/TheUnknownThing/vscode-acmoj/issues/new). Be sure to include:
 
-*   A **clear and descriptive title**.
-*   The **version of VS Code** you're using.
-*   The **version of this extension** you're using.
-*   **Steps to reproduce** the behavior.
-*   What you **expected to see** and what you **actually saw**.
-*   Relevant **screenshots** or error messages from the VS Code Developer Tools (`Help > Toggle Developer Tools`).
+- A **clear and descriptive title**.
+- The **version of VS Code** you're using.
+- The **version of this extension** you're using.
+- **Steps to reproduce** the behavior.
+- What you **expected to see** and what you **actually saw**.
+- Relevant **screenshots** or error messages from the VS Code Developer Tools (`Help > Toggle Developer Tools`).
 
 ### Suggesting Enhancements
 
 Enhancement suggestions are tracked as GitHub issues.
 
-*   Search the [issues](https://github.com/TheUnknownThing/vscode-acmoj/issues) to see if the enhancement has already been suggested.
-*   If not, [open a new issue](https://github.com/TheUnknownThing/vscode-acmoj/issues/new).
-*   Provide a **clear and descriptive title**.
-*   Explain the **motivation** for the enhancement (what problem does it solve?).
-*   Provide a **step-by-step description** of the suggested enhancement in as much detail as possible.
-*   Explain **why this enhancement would be useful** to most users.
+- Search the [issues](https://github.com/TheUnknownThing/vscode-acmoj/issues) to see if the enhancement has already been suggested.
+- If not, [open a new issue](https://github.com/TheUnknownThing/vscode-acmoj/issues/new).
+- Provide a **clear and descriptive title**.
+- Explain the **motivation** for the enhancement (what problem does it solve?).
+- Provide a **step-by-step description** of the suggested enhancement in as much detail as possible.
+- Explain **why this enhancement would be useful** to most users.
 
 ### Your First Code Contribution
 
@@ -54,7 +54,7 @@ Unsure where to begin? Look for issues tagged `good first issue` or `help wanted
 ### Pull Requests
 
 1.  **Fork** the repository on GitHub.
-2.  **Clone** your fork locally: `git clone https://github.com/your-username/vscode-acmoj.git` *(Replace with your fork link)*
+2.  **Clone** your fork locally: `git clone https://github.com/your-username/vscode-acmoj.git`
 3.  **Create a branch** for your local development: `git checkout -b my-new-feature` or `git checkout -b fix/bug-name`. Use a descriptive branch name.
 4.  **Make your changes** locally.
 5.  **Test your changes** thoroughly (see [Testing](#testing)).
@@ -69,18 +69,18 @@ Unsure where to begin? Look for issues tagged `good first issue` or `help wanted
 To get the extension running locally for development:
 
 1.  **Prerequisites:**
-    *   [Node.js](https://nodejs.org/) (LTS version recommended, e.g., >= 18.x)
-    *   `npm` (comes with Node.js) or `yarn`
-    *   [Git](https://git-scm.com/)
-    *   [Visual Studio Code](https://code.visualstudio.com/) (latest stable version recommended)
+    - [Node.js](https://nodejs.org/) (LTS version recommended, e.g., >= 18.x)
+    - `npm` (comes with Node.js) or `yarn`
+    - [Git](https://git-scm.com/)
+    - [Visual Studio Code](https://code.visualstudio.com/) (latest stable version recommended)
 2.  **Clone your fork:** `git clone https://github.com/your-username/vscode-acmoj.git`
 3.  **Navigate to the project directory:** `cd vscode-acmoj`
 4.  **Install dependencies:** `npm install` or `yarn install`
 5.  **Open the project in VS Code:** `code .`
 6.  **Compile TypeScript (optional, happens automatically on debug):** `npm run compile` or `npm run watch` for continuous compilation.
 7.  **Start Debugging:** Press `F5` or go to the "Run and Debug" view (Ctrl+Shift+D) and click the green play button for "Run Extension". This will:
-    *   Compile the TypeScript code (if needed).
-    *   Open a new VS Code window (the **Extension Development Host**) with your extension loaded and running.
+    - Compile the TypeScript code (if needed).
+    - Open a new VS Code window (the **Extension Development Host**) with your extension loaded and running.
 
 You can now use the extension in the Extension Development Host window and set breakpoints, inspect variables, etc., in the original VS Code window where you launched the debugger.
 
@@ -90,45 +90,47 @@ Here's a brief overview of the key files and directories:
 
 ```
 .
-├── .vscode/             # VS Code specific settings (launch.json, tasks.json)
-├── node_modules/        # Project dependencies (including katex)
-├── out/                 # Compiled JavaScript output (from src/)
-├── src/                 # TypeScript source code
-│   ├── extension.ts     # Main activation/deactivation point
-│   ├── api.ts           # Client for interacting with the ACMOJ API
-│   ├── auth.ts          # Handles Personal Access Token storage and validation
-│   ├── commands.ts      # Registers and implements VS Code commands
-│   ├── types.ts         # TypeScript interfaces for API responses/data
-│   ├── views/           # Tree Data Providers for side panel views
+├── .vscode/                  # VS Code specific settings (launch.json, tasks.json)
+├── node_modules/             # Project dependencies (including katex)
+├── out/                      # Compiled JavaScript output (from src/)
+├── src/                      # TypeScript source code
+│   ├── extension.ts          # Main activation/deactivation point
+│   ├── api.ts                # Client for interacting with the ACMOJ API
+│   ├── cache.ts              # Handles cache for API responses (problemset, submission)
+│   ├── submissionMonitor.ts  # Monitors submission status and updates the view
+│   ├── auth.ts               # Handles Personal Access Token storage and validation
+│   ├── commands.ts           # Registers and implements VS Code commands
+│   ├── types.ts              # TypeScript interfaces for API responses/data
+│   ├── views/                # Tree Data Providers for side panel views
 │   │   ├── problemProvider.ts
 │   │   ├── problemsetProvider.ts
 │   │   └── submissionProvider.ts
-│   └── webviews.ts      # Logic for generating and managing Webview panels (problem/submission details)
-├── .gitignore           # Files ignored by Git
-├── .vscodeignore        # Files ignored when packaging the extension
-├── CHANGELOG.md         # Log of changes per version
-├── CODE_OF_CONDUCT.md   # Code of Conduct for contributors
-├── LICENSE.md           # License for the project
-├── CONTRIBUTING.md      # This file!
-├── package.json         # Extension manifest (metadata, dependencies, contributions, activation)
-├── README.md            # Extension documentation for users
-└── tsconfig.json        # TypeScript compiler configuration
+│   └── webviews.ts           # Logic for generating and managing Webview panels (problem/submission details)
+├── .gitignore                # Files ignored by Git
+├── .vscodeignore             # Files ignored when packaging the extension
+├── CHANGELOG.md              # Log of changes per version
+├── CODE_OF_CONDUCT.md        # Code of Conduct for contributors
+├── LICENSE.md                # License for the project
+├── CONTRIBUTING.md           # This file!
+├── package.json              # Extension manifest (metadata, dependencies, contributions, activation)
+├── README.md                 # Extension documentation for users
+└── tsconfig.json             # TypeScript compiler configuration
 ```
 
-*   **`package.json`** is crucial. It defines how the extension integrates with VS Code (commands, views, configuration, activation events).
-*   **`src/extension.ts`** is the entry point where services are initialized and features are registered.
-*   Most user-facing features involve registering a **command** (`src/commands.ts`), potentially interacting with the **API** (`src/api.ts`), managing **authentication** (`src/auth.ts`), and displaying information in **views** (`src/views/`) or **webviews** (`src/webviews.ts`).
+- **`package.json`** is crucial. It defines how the extension integrates with VS Code (commands, views, configuration, activation events).
+- **`src/extension.ts`** is the entry point where services are initialized and features are registered.
+- Most user-facing features involve registering a **command** (`src/commands.ts`), potentially interacting with the **API** (`src/api.ts`), managing **authentication** (`src/auth.ts`), and displaying information in **views** (`src/views/`) or **webviews** (`src/webviews.ts`).
 
 ## Coding Style
 
-*   **Language:** TypeScript. Please follow standard TypeScript best practices.
-*   **Linter/Formatter:** We use ESLint and potentially Prettier (check `.eslintrc.js` and `.prettierrc.js`). Please run `npm run lint` and/or `npm run format` before committing. Ensure your editor is configured to use these tools.
-*   **VS Code API:**
-    *   Use the official `vscode` API module.
-    *   Properly manage disposables by adding them to `context.subscriptions` in `activate` or managing them within specific components (like WebviewPanels).
-    *   Use asynchronous operations (`async`/`await`) appropriately, especially for API calls and VS Code UI interactions that return `Thenable`.
-*   **Error Handling:** Use `try...catch` for operations that might fail (like API calls). Provide informative error messages to the user using `vscode.window.showErrorMessage`. Log detailed errors to the console for debugging (`console.error`).
-*   **Comments:** Add comments to explain complex logic or non-obvious code sections. Use TSDoc comments for exported functions and classes.
+- **Language:** TypeScript. Please follow standard TypeScript best practices.
+- **Linter/Formatter:** We use ESLint and potentially Prettier (check `.eslintrc.js` and `.prettierrc.js`). Please run `npm run lint` and/or `npm run format` before committing. Ensure your editor is configured to use these tools.
+- **VS Code API:**
+  - Use the official `vscode` API module.
+  - Properly manage disposables by adding them to `context.subscriptions` in `activate` or managing them within specific components (like WebviewPanels).
+  - Use asynchronous operations (`async`/`await`) appropriately, especially for API calls and VS Code UI interactions that return `Thenable`.
+- **Error Handling:** Use `try...catch` for operations that might fail (like API calls). Provide informative error messages to the user using `vscode.window.showErrorMessage`. Log detailed errors to the console for debugging (`console.error`).
+- **Comments:** Add comments to explain complex logic or non-obvious code sections. Use TSDoc comments for exported functions and classes.
 
 ## Testing
 
@@ -136,16 +138,16 @@ Currently, testing is primarily done **manually** using the Extension Developmen
 
 1.  Launch the extension via `F5`.
 2.  In the new window:
-    *   Test the login/logout flow (`Set Personal Access Token`, `Clear Personal Access Token`).
-    *   Verify the status bar updates correctly.
-    *   Test refreshing and navigating the Problemset and Submission views.
-    *   Test opening problem details (check Markdown and KaTeX rendering).
-    *   Test opening submission details.
-    *   Test submitting code from the editor or problem view.
-    *   Test aborting submissions (if applicable).
-    *   Test edge cases (invalid token, API errors, empty lists, invalid problem IDs).
+    - Test the login/logout flow (`Set Personal Access Token`, `Clear Personal Access Token`).
+    - Verify the status bar updates correctly.
+    - Test refreshing and navigating the Problemset and Submission views.
+    - Test opening problem details (check Markdown and KaTeX rendering).
+    - Test opening submission details.
+    - Test submitting code from the editor or problem view.
+    - Test aborting submissions (if applicable).
+    - Test edge cases (invalid token, API errors, empty lists, invalid problem IDs).
 
-*   **Unit/Integration Tests:** If tests are added using `@vscode/test-electron`, they can be run via `npm test`. Please add tests for new features or bug fixes where appropriate.
+- **Unit/Integration Tests:** If tests are added using `@vscode/test-electron`, they can be run via `npm test`. Please add tests for new features or bug fixes where appropriate.
 
 ---
 
