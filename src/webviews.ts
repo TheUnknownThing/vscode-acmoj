@@ -170,50 +170,28 @@ export async function showSubmissionDetails(
 
   try {
     const submission = await apiClient.getSubmissionDetails(submissionId)
-    let codeContent = submission.code_url
-      ? 'Loading code...'
-      : 'Code not available or permission denied.'
-    panel.webview.html = getSubmissionHtml(
-      submission,
-      codeContent,
-      panel.webview,
-      context.extensionUri,
-    )
+    let codeContent = 'Loading code...'
 
-    if (submission.code_url) {
-      try {
-        codeContent = await apiClient.getSubmissionCode(submission.code_url)
-        panel.webview.html = getSubmissionHtml(
-          submission,
-          codeContent,
-          panel.webview,
-          context.extensionUri,
-        )
-      } catch (codeError: any) {
-        panel.webview.html = getSubmissionHtml(
-          submission,
-          `Error loading code: ${codeError.message}`,
-          panel.webview,
-          context.extensionUri,
-        )
-      }
-    }
+    updatePanelHtml(submission, codeContent)
 
-    // handle messages (e.g. clicking "Abort")
     panel.webview.onDidReceiveMessage(
       async (message) => {
-        switch (message.command) {
-          case 'abort':
-            if (submission.abort_url) {
-              vscode.commands.executeCommand(
-                'acmoj.abortSubmission',
-                submission.id,
-              )
-            }
-            return
+        try {
+          switch (message.command) {
+            case 'abort':
+              if (submission.abort_url) {
+                vscode.commands.executeCommand(
+                  'acmoj.abortSubmission',
+                  submission.id,
+                )
+              }
+              break
 
-          case 'openInEditor':
-            try {
+            case 'viewProblem':
+              await showProblemDetails(message.problemId, apiClient, context)
+              break
+
+            case 'openInEditor':
               const code = await apiClient.getSubmissionCode(message.codeUrl)
               await openSubmissionCodeInEditor(
                 code,
@@ -221,17 +199,30 @@ export async function showSubmissionDetails(
                 message.problemId,
                 message.submissionId,
               )
-            } catch (error: any) {
-              vscode.window.showErrorMessage(
-                `Failed to open code: ${error.message}`,
-              )
-            }
-            return
+              break
+          }
+        } catch (error: any) {
+          vscode.window.showErrorMessage(
+            `Error handling ${message.command}: ${error.message}`,
+          )
         }
       },
       undefined,
       context.subscriptions,
     )
+
+    if (submission.code_url) {
+      try {
+        codeContent = await apiClient.getSubmissionCode(submission.code_url)
+      } catch (error: any) {
+        codeContent = `Error loading code: ${error.message}`
+      }
+
+      updatePanelHtml(submission, codeContent)
+    } else {
+      codeContent = 'Code not available or permission denied.'
+      updatePanelHtml(submission, codeContent)
+    }
   } catch (error: any) {
     panel.webview.html = getWebviewContent(
       `Error loading submission ${submissionId}: ${error.message}`,
@@ -240,6 +231,15 @@ export async function showSubmissionDetails(
     )
     vscode.window.showErrorMessage(
       `Failed to load submission ${submissionId}: ${error.message}`,
+    )
+  }
+
+  function updatePanelHtml(submission: Submission, codeContent: string) {
+    panel.webview.html = getSubmissionHtml(
+      submission,
+      codeContent,
+      panel.webview,
+      context.extensionUri,
     )
   }
 
@@ -656,9 +656,9 @@ function getSubmissionHtml(
 
         <div class="section">
             <h2>Details</h2>
-            <p><span class="label">Problem:</span> ${
+            <p><span class="label">Problem:</span> <a href="#" id="problem-link" data-problem-id="${
               submission.problem?.id
-            }: ${problemTitleHtml}</p>
+            }">${submission.problem?.id}: ${problemTitleHtml}</a></p>
             <p><span class="label">User:</span> ${friendlyNameHtml}</p>
             <p><span class="label">Status:</span> <strong class="${statusClass}">${
               submission.status
@@ -718,6 +718,18 @@ function getSubmissionHtml(
                         language: btn.getAttribute('data-language'),
                         problemId: parseInt(btn.getAttribute('data-problem-id'))
                     });
+                }
+                
+                if (target.id === 'problem-link' || target.parentElement.id === 'problem-link') {
+                    const problemLink = target.id === 'problem-link' ? target : target.parentElement;
+                    const problemId = parseInt(problemLink.getAttribute('data-problem-id'));
+                    if (!isNaN(problemId)) {
+                        vscode.postMessage({ 
+                            command: 'viewProblem',
+                            problemId: problemId
+                        });
+                    }
+                    event.preventDefault();
                 }
             });
         </script>

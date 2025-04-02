@@ -353,7 +353,7 @@ export class ProblemsetBriefTreeItem extends vscode.TreeItem {
     } else {
       this.description = ''
       // Indent non-first lines with spaces to make it visually appear as a block
-      this.label = `    ${text}`
+      this.label = ` ${text}`
     }
     // Create a unique ID for description items as well
     this.id = problemsetId

@@ -4,7 +4,12 @@ import { SubmissionBrief, SubmissionStatus } from '../types'
 import { AuthService } from '../auth'
 
 // Union type for tree items
-export type SubmissionViewItem = SubmissionTreeItem | NavigationTreeItem
+export type SubmissionViewItem =
+  | SubmissionTreeItem
+  | NavigationTreeItem
+  | FilterCategoryTreeItem
+  | FilterOptionTreeItem
+  | FilterGroupTreeItem
 
 export class SubmissionProvider
   implements vscode.TreeDataProvider<SubmissionViewItem>
@@ -19,7 +24,12 @@ export class SubmissionProvider
   private currentCursor: string | undefined = undefined
   private previousCursors: string[] = []
   private hasNextPage: boolean = false
-  private nextPageCursor: string | undefined = undefined // New variable to store the next page cursor
+  private nextPageCursor: string | undefined = undefined
+
+  // Filter state
+  private statusFilter: string | undefined = undefined
+  private problemIdFilter: number | undefined = undefined
+  private languageFilter: string | undefined = undefined
 
   constructor(
     private apiClient: ApiClient,
@@ -40,14 +50,26 @@ export class SubmissionProvider
     this.refresh()
   }
 
-  // Navigate to next page
+  setStatusFilter(status: string | undefined): void {
+    this.statusFilter = status
+    this.resetPagination()
+  }
+
+  setProblemIdFilter(problemId: number | undefined): void {
+    this.problemIdFilter = problemId
+    this.resetPagination()
+  }
+
+  setLanguageFilter(language: string | undefined): void {
+    this.languageFilter = language
+    this.resetPagination()
+  }
+
   nextPage(): void {
     if (this.hasNextPage && this.nextPageCursor) {
-      // Preserve the current cursor before moving to the next page
       if (!this.previousCursors.includes(this.currentCursor || '')) {
         this.previousCursors.push(this.currentCursor || '')
       }
-      // Set the next page cursor as the current cursor
       this.currentCursor = this.nextPageCursor
       this.refresh()
     } else {
@@ -55,7 +77,6 @@ export class SubmissionProvider
     }
   }
 
-  // Navigate to previous page
   previousPage(): void {
     if (this.previousCursors.length > 0) {
       this.currentCursor = this.previousCursors[this.previousCursors.length - 1]
@@ -84,18 +105,43 @@ export class SubmissionProvider
       ]
     }
 
+    // If this is the filter group, return filter categories
+    if (element instanceof FilterGroupTreeItem) {
+      return [
+        new FilterCategoryTreeItem('Status', 'status', this.statusFilter),
+        new FilterCategoryTreeItem(
+          'Problem ID',
+          'problemId',
+          this.problemIdFilter?.toString(),
+        ),
+        new FilterCategoryTreeItem('Language', 'language', this.languageFilter),
+      ]
+    }
+
+    // If this is a filter category, return filter options
+    if (element instanceof FilterCategoryTreeItem) {
+      return this.getFilterOptions(element.filterType)
+    }
+
     if (element) {
       return []
     } else {
       try {
-        // Get the current page of submissions
+        const result: SubmissionViewItem[] = []
+
+        // Add single collapsible filters group at the top
+        result.push(new FilterGroupTreeItem(this.hasActiveFilters()))
+
+        // Get the current page of submissions with filters applied
         const profile = await this.apiClient.getUserProfile()
         const username = profile.username
 
-        // Acquire data from current cursor
         const { submissions, next } = await this.apiClient.getSubmissions(
           this.currentCursor,
           username,
+          this.problemIdFilter,
+          this.statusFilter,
+          this.languageFilter,
         )
 
         for (const submission of submissions) {
@@ -113,27 +159,35 @@ export class SubmissionProvider
           : undefined
         this.hasNextPage = Boolean(this.nextPageCursor)
 
-        const result: SubmissionViewItem[] = submissions.map(
-          (s) => new SubmissionTreeItem(s),
-        )
+        // Add submission items
+        result.push(...submissions.map((s) => new SubmissionTreeItem(s)))
 
-        if (this.previousCursors.length > 0) {
-          result.unshift(
-            new NavigationTreeItem('Previous Page', 'previous-page'),
-          )
+        // Add navigation items at the bottom
+        if (this.previousCursors.length > 0 || this.hasNextPage) {
+          const navigationItems: NavigationTreeItem[] = []
 
-          if (this.previousCursors.length > 1) {
-            result.unshift(
-              new NavigationTreeItem(
-                'Back to First Page',
-                'back-to-first-page',
-              ),
+          if (this.hasNextPage) {
+            navigationItems.push(
+              new NavigationTreeItem('Next Page', 'next-page'),
             )
           }
-        }
 
-        if (this.hasNextPage) {
-          result.push(new NavigationTreeItem('Next Page', 'next-page'))
+          if (this.previousCursors.length > 0) {
+            navigationItems.push(
+              new NavigationTreeItem('Previous Page', 'previous-page'),
+            )
+
+            if (this.previousCursors.length > 1) {
+              navigationItems.push(
+                new NavigationTreeItem(
+                  'Back to First Page',
+                  'back-to-first-page',
+                ),
+              )
+            }
+          }
+
+          result.push(...navigationItems)
         }
 
         return result
@@ -149,6 +203,159 @@ export class SubmissionProvider
         ]
       }
     }
+  }
+
+  private hasActiveFilters(): boolean {
+    return (
+      this.statusFilter !== undefined ||
+      this.problemIdFilter !== undefined ||
+      this.languageFilter !== undefined
+    )
+  }
+
+  private getFilterOptions(filterType: string): SubmissionViewItem[] {
+    if (filterType === 'status') {
+      const statuses = [
+        { label: 'All', value: undefined },
+        { label: 'Accepted', value: 'accepted' },
+        { label: 'Wrong Answer', value: 'wrong_answer' },
+        { label: 'Compile Error', value: 'compile_error' },
+        { label: 'Time Limit Exceeded', value: 'time_limit_exceeded' },
+        { label: 'Memory Limit Exceeded', value: 'memory_limit_exceeded' },
+        { label: 'Memory Leak', value: 'memory_leak' },
+        { label: 'Disk Limit Exceeded', value: 'disk_limit_exceeded' },
+        { label: 'Runtime Error', value: 'runtime_error' },
+        { label: 'Pending', value: 'pending' },
+        { label: 'Judging', value: 'judging' },
+      ]
+
+      return statuses.map(
+        (status) =>
+          new FilterOptionTreeItem(
+            status.label,
+            'status',
+            status.value,
+            this.statusFilter === status.value,
+          ),
+      )
+    } else if (filterType === 'problemId') {
+      const options: { label: string; value: undefined | number | 'custom' }[] =
+        [{ label: 'All Problems', value: undefined }]
+
+      // If there's a current problem ID filter, add it to the options
+      if (this.problemIdFilter !== undefined) {
+        options.push({
+          label: `Problem ${this.problemIdFilter}`,
+          value: this.problemIdFilter,
+        })
+      }
+
+      // Add option to set custom problem ID
+      options.push({ label: 'Set Custom Problem ID...', value: 'custom' })
+
+      return options.map(
+        (option) =>
+          new FilterOptionTreeItem(
+            option.label,
+            'problemId',
+            option.value,
+            this.problemIdFilter === option.value,
+          ),
+      )
+    } else if (filterType === 'language') {
+      const languages = [
+        { label: 'All', value: undefined },
+        { label: 'C++', value: 'cpp' },
+        { label: 'Python', value: 'python' },
+        { label: 'Git', value: 'git' },
+        { label: 'Verilog', value: 'verilog' },
+      ]
+
+      return languages.map(
+        (language) =>
+          new FilterOptionTreeItem(
+            language.label,
+            'language',
+            language.value,
+            this.languageFilter === language.value,
+          ),
+      )
+    }
+
+    return []
+  }
+}
+
+export class FilterGroupTreeItem extends vscode.TreeItem {
+  constructor(hasActiveFilters: boolean) {
+    super(
+      'Filters',
+      hasActiveFilters
+        ? vscode.TreeItemCollapsibleState.Expanded
+        : vscode.TreeItemCollapsibleState.Collapsed,
+    )
+
+    this.iconPath = new vscode.ThemeIcon('filter')
+    this.contextValue = 'filter-group'
+
+    // Show a badge if filters are active
+    if (hasActiveFilters) {
+      this.description = 'Active'
+      this.iconPath = new vscode.ThemeIcon('filter-filled')
+    }
+  }
+}
+
+export class FilterCategoryTreeItem extends vscode.TreeItem {
+  constructor(
+    label: string,
+    public readonly filterType: string,
+    currentValue?: string,
+  ) {
+    super(label, vscode.TreeItemCollapsibleState.Collapsed)
+
+    this.description = currentValue
+      ? filterType === 'status'
+        ? currentValue
+        : `ID: ${currentValue}`
+      : 'All'
+
+    this.iconPath = new vscode.ThemeIcon('filter')
+    this.contextValue = 'filter-category'
+  }
+}
+
+// Filter option item
+export class FilterOptionTreeItem extends vscode.TreeItem {
+  constructor(
+    label: string,
+    public readonly filterType: string,
+    public readonly value: any,
+    isSelected: boolean,
+  ) {
+    super(label, vscode.TreeItemCollapsibleState.None)
+
+    if (filterType === 'problemId' && value === 'custom') {
+      this.command = {
+        command: 'acmoj.setCustomProblemIdFilter',
+        title: 'Set Custom Problem ID',
+        arguments: [],
+      }
+    } else {
+      let commandName = `acmoj.set${filterType.charAt(0).toUpperCase() + filterType.slice(1)}Filter`
+
+      this.command = {
+        command: commandName,
+        title: `Set ${filterType} Filter`,
+        arguments: [this.value],
+      }
+    }
+
+    if (isSelected) {
+      this.iconPath = new vscode.ThemeIcon('check')
+    }
+
+    this.contextValue = 'filter-option'
   }
 }
 

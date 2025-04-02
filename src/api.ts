@@ -337,8 +337,8 @@ export class ApiClient {
           throw new Error('Failed to fetch submission code.')
         }
       },
-      30,
-    ) // Cache for 30 minutes, code content doesn't change
+      60,
+    ) // Cache for 60 minutes, code content doesn't change
   }
 
   async abortSubmission(submissionId: number): Promise<void> {
@@ -373,8 +373,8 @@ export class ApiClient {
         )
         return response
       },
-      15,
-    ) // Cache for 15 minutes
+      60,
+    ) // Cache for 60 minutes
   }
 
   // --- Course Endpoints ---

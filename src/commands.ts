@@ -122,6 +122,38 @@ export function registerCommands(
       },
     ),
 
+    vscode.commands.registerCommand('acmoj.setStatusFilter', (value) => {
+      submissionProvider.setStatusFilter(value)
+    }),
+
+    vscode.commands.registerCommand('acmoj.setLanguageFilter', (value) => {
+      submissionProvider.setLanguageFilter(value)
+    }),
+
+    vscode.commands.registerCommand('acmoj.setProblemIdFilter', (value) => {
+      submissionProvider.setProblemIdFilter(value)
+    }),
+
+    vscode.commands.registerCommand(
+      'acmoj.setCustomProblemIdFilter',
+      async () => {
+        const problemId = await vscode.window.showInputBox({
+          placeHolder: 'Enter problem ID',
+          validateInput: (value) => {
+            if (value && !/^\d+$/.test(value)) {
+              return 'Please enter a valid number'
+            }
+            return null
+          },
+        })
+
+        if (problemId !== undefined) {
+          submissionProvider.setProblemIdFilter(
+            problemId ? parseInt(problemId) : undefined,
+          )
+        }
+      },
+    ),
     vscode.commands.registerCommand('acmoj.submissionNextPage', () => {
       submissionProvider.nextPage()
     }),
@@ -193,14 +225,7 @@ export function registerCommands(
           problemId = parseInt(problemIdStr, 10)
         }
 
-        let availableLanguages: string[] = [
-          'cpp',
-          'python',
-          'java',
-          'c',
-          'git',
-          'verilog',
-        ]
+        let availableLanguages: string[] = ['cpp', 'python', 'git', 'verilog']
         try {
           const problem = await apiClient.getProblemDetails(problemId)
           if (problem.languages_accepted) {

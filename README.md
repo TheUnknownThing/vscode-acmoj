@@ -80,14 +80,18 @@ This extension contributes the following settings (accessible via `File > Prefer
 
 ## Known Issues
 
-*  Error handling can be improved for edge cases.
-*  API rate limits may affect viewing problemsets or submissions. **(Major Issue)** Now, we use a cache to store the problemset and submission data for 15 minutes. This should help reduce the number of API calls and avoid rate limits.
+*   Error handling can be improved for edge cases.
+*   API rate limits may affect viewing problemsets or submissions. **(Major Issue)** Now, we use a cache to store the problemset and submission data for 15 minutes. This should help reduce the number of API calls and avoid rate limits.
+*   The filter in the submission view causes the submission item to be indented. I've read the VS Code API documentation, but I couldn't find a way to fix it. If you know how to do it, please let me know.
 
 ## TODO
 
 *   Add support for submitting file in the problem view.
 *   Open the problem in the editor when clicking it in submission view.
 *   Add filter and search functionality in the submission view.
+*   Move the function `acmoj:submitCurrentFile` to another file.
+*   Move filter options of submission to another file, add another abstract layer.
+*   Refactor the code in `webviews.ts` to keep it concise.
 
 ## Contributing
 

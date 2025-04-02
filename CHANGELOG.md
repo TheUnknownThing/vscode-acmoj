@@ -182,3 +182,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 *   Added submissions monitor to monitor submission more precisely
 *   Fixed the cache issue where the cache was not being cleared when the token was changed.
+
+## [0.4.0] - 2025-4-2
+
+### Added
+
+*   Added a command to open the problem in the editor when clicking it in the submission view.
+*   Added filter in the submission view.
+
+### Removed
+
+*   The `problemProvider.ts` is deprecated and removed.
+
+### Changed
+
+*   Make the indentation of the problemset view smaller.
+*   Changed the cache expiration of user profile and submission to 1 hour.

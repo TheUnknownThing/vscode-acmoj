@@ -64,7 +64,7 @@ export async function activate(context: vscode.ExtensionContext) {
     'acmoj.loggedIn',
     authService.isLoggedIn(),
   )
-  
+
   if (authService.isLoggedIn()) {
     problemsetProvider.refresh()
     submissionProvider.refresh()
