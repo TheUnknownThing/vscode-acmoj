@@ -19,7 +19,7 @@ This document provides guidelines for contributing to this project.
 
 ## Code of Conduct
 
-This project and everyone participating in it are governed by the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior. _(Note: You'll need to add a CODE_OF_CONDUCT.md file, the Contributor Covenant is a good standard choice)_
+This project and everyone participating in it are governed by the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior.
 
 ## How Can I Contribute?
 

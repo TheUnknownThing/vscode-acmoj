@@ -431,84 +431,105 @@ export function registerCommands(
       vscode.window.showInformationMessage('All submission filters cleared')
     }),
 
-    vscode.commands.registerCommand('acmoj.manageSubmissionFilters', async (filterType) => {
-      if (!authService.isLoggedIn()) {
-        vscode.window.showWarningMessage('Please login to ACMOJ first.')
-        return
-      }
-
-      if (!filterType) {
-        const options = ['Status', 'Problem ID', 'Language', 'Clear All Filters']
-        const selection = await vscode.window.showQuickPick(options, {
-          placeHolder: 'Select filter to manage'
-        })
-
-        if (!selection) return
-
-        if (selection === 'Clear All Filters') {
-          vscode.commands.executeCommand('acmoj.clearAllFilters')
+    vscode.commands.registerCommand(
+      'acmoj.manageSubmissionFilters',
+      async (filterType) => {
+        if (!authService.isLoggedIn()) {
+          vscode.window.showWarningMessage('Please login to ACMOJ first.')
           return
-        } else if (selection === 'Status') {
-          filterType = 'status'
-        } else if (selection === 'Problem ID') {
-          filterType = 'problemId'
-        } else if (selection === 'Language') {
-          filterType = 'language'
         }
-      }
 
-      switch (filterType) {
-        case 'status':
-          const statusOptions = [
-            { label: 'All', value: undefined },
-            { label: 'Accepted', value: 'accepted' },
-            { label: 'Wrong Answer', value: 'wrong_answer' },
-            { label: 'Compile Error', value: 'compile_error' },
-            { label: 'Time Limit Exceeded', value: 'time_limit_exceeded' },
-            { label: 'Memory Limit Exceeded', value: 'memory_limit_exceeded' },
-            { label: 'Memory Leak', value: 'memory_leak' },
-            { label: 'Disk Limit Exceeded', value: 'disk_limit_exceeded' },
-            { label: 'Runtime Error', value: 'runtime_error' },
-            { label: 'Pending', value: 'pending' },
-            { label: 'Judging', value: 'judging' },
+        if (!filterType) {
+          const options = [
+            'Status',
+            'Problem ID',
+            'Language',
+            'Clear All Filters',
           ]
+          const selection = await vscode.window.showQuickPick(options, {
+            placeHolder: 'Select filter to manage',
+          })
 
-          const statusSelection = await vscode.window.showQuickPick(
-            statusOptions.map(o => o.label),
-            { placeHolder: 'Select status filter' }
-          )
+          if (!selection) return
 
-          if (statusSelection) {
-            const selectedOption = statusOptions.find(o => o.label === statusSelection)
-            vscode.commands.executeCommand('acmoj.setStatusFilter', selectedOption?.value)
+          if (selection === 'Clear All Filters') {
+            vscode.commands.executeCommand('acmoj.clearAllFilters')
+            return
+          } else if (selection === 'Status') {
+            filterType = 'status'
+          } else if (selection === 'Problem ID') {
+            filterType = 'problemId'
+          } else if (selection === 'Language') {
+            filterType = 'language'
           }
-          break
+        }
 
-        case 'problemId':
-          vscode.commands.executeCommand('acmoj.setCustomProblemIdFilter')
-          break
+        switch (filterType) {
+          case 'status':
+            const statusOptions = [
+              { label: 'All', value: undefined },
+              { label: 'Accepted', value: 'accepted' },
+              { label: 'Wrong Answer', value: 'wrong_answer' },
+              { label: 'Compile Error', value: 'compile_error' },
+              { label: 'Time Limit Exceeded', value: 'time_limit_exceeded' },
+              {
+                label: 'Memory Limit Exceeded',
+                value: 'memory_limit_exceeded',
+              },
+              { label: 'Memory Leak', value: 'memory_leak' },
+              { label: 'Disk Limit Exceeded', value: 'disk_limit_exceeded' },
+              { label: 'Runtime Error', value: 'runtime_error' },
+              { label: 'Pending', value: 'pending' },
+              { label: 'Judging', value: 'judging' },
+            ]
 
-        case 'language':
-          const languageOptions = [
-            { label: 'All', value: undefined },
-            { label: 'C++', value: 'cpp' },
-            { label: 'Python', value: 'python' },
-            { label: 'Git', value: 'git' },
-            { label: 'Verilog', value: 'verilog' },
-          ]
+            const statusSelection = await vscode.window.showQuickPick(
+              statusOptions.map((o) => o.label),
+              { placeHolder: 'Select status filter' },
+            )
 
-          const langSelection = await vscode.window.showQuickPick(
-            languageOptions.map(o => o.label),
-            { placeHolder: 'Select language filter' }
-          )
+            if (statusSelection) {
+              const selectedOption = statusOptions.find(
+                (o) => o.label === statusSelection,
+              )
+              vscode.commands.executeCommand(
+                'acmoj.setStatusFilter',
+                selectedOption?.value,
+              )
+            }
+            break
 
-          if (langSelection) {
-            const selectedOption = languageOptions.find(o => o.label === langSelection)
-            vscode.commands.executeCommand('acmoj.setLanguageFilter', selectedOption?.value)
-          }
-          break
-      }
-    }),
+          case 'problemId':
+            vscode.commands.executeCommand('acmoj.setCustomProblemIdFilter')
+            break
+
+          case 'language':
+            const languageOptions = [
+              { label: 'All', value: undefined },
+              { label: 'C++', value: 'cpp' },
+              { label: 'Python', value: 'python' },
+              { label: 'Git', value: 'git' },
+              { label: 'Verilog', value: 'verilog' },
+            ]
+
+            const langSelection = await vscode.window.showQuickPick(
+              languageOptions.map((o) => o.label),
+              { placeHolder: 'Select language filter' },
+            )
+
+            if (langSelection) {
+              const selectedOption = languageOptions.find(
+                (o) => o.label === langSelection,
+              )
+              vscode.commands.executeCommand(
+                'acmoj.setLanguageFilter',
+                selectedOption?.value,
+              )
+            }
+            break
+        }
+      },
+    ),
   )
 }
 

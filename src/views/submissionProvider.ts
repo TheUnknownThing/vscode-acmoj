@@ -194,9 +194,7 @@ export class SubmissionProvider
         const navigationItems: NavigationTreeItem[] = []
 
         if (this.hasNextPage) {
-          navigationItems.push(
-            new NavigationTreeItem('Next Page', 'next-page'),
-          )
+          navigationItems.push(new NavigationTreeItem('Next Page', 'next-page'))
         }
 
         if (this.previousCursors.length > 0) {

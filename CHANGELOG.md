@@ -198,3 +198,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 *   Make the indentation of the problemset view smaller.
 *   Changed the cache expiration of user profile and submission to 1 hour.
+
+## [0.4.1] - 2025-4-3
+
+### Fixed
+
+*   Fixed the issue where the filter in the submission view causes the submission item to be indented
