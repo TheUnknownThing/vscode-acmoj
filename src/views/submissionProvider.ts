@@ -10,6 +10,9 @@ export type SubmissionViewItem =
   | FilterCategoryTreeItem
   | FilterOptionTreeItem
   | FilterGroupTreeItem
+  | FilterButtonItem
+  | FilterItemTreeItem
+  | ClearFiltersTreeItem
 
 export class SubmissionProvider
   implements vscode.TreeDataProvider<SubmissionViewItem>
@@ -123,85 +126,108 @@ export class SubmissionProvider
       return this.getFilterOptions(element.filterType)
     }
 
+    // If there is a parent element but not a filter category, return an empty array
     if (element) {
       return []
-    } else {
-      try {
-        const result: SubmissionViewItem[] = []
+    }
 
-        // Add single collapsible filters group at the top
-        result.push(new FilterGroupTreeItem(this.hasActiveFilters()))
+    // Root level display - top-level nodes
+    try {
+      const result: SubmissionViewItem[] = []
 
-        // Get the current page of submissions with filters applied
-        const profile = await this.apiClient.getUserProfile()
-        const username = profile.username
+      // Add individual filter items to display current filter states
+      result.push(
+        new FilterItemTreeItem('Status', this.statusFilter || 'All', 'status'),
+      )
+      result.push(
+        new FilterItemTreeItem(
+          'Problem',
+          this.problemIdFilter ? `ID: ${this.problemIdFilter}` : 'All',
+          'problemId',
+        ),
+      )
+      result.push(
+        new FilterItemTreeItem(
+          'Language',
+          this.languageFilter || 'All',
+          'language',
+        ),
+      )
 
-        const { submissions, next } = await this.apiClient.getSubmissions(
-          this.currentCursor,
-          username,
-          this.problemIdFilter,
-          this.statusFilter,
-          this.languageFilter,
-        )
-
-        for (const submission of submissions) {
-          if (
-            submission.status === 'pending' ||
-            submission.status === 'compiling' ||
-            submission.status === 'judging'
-          ) {
-            this.apiClient.expireSubmissionCache(submission.id)
-          }
-        }
-
-        this.nextPageCursor = next
-          ? new URLSearchParams(next).get('cursor') || undefined
-          : undefined
-        this.hasNextPage = Boolean(this.nextPageCursor)
-
-        // Add submission items
-        result.push(...submissions.map((s) => new SubmissionTreeItem(s)))
-
-        // Add navigation items at the bottom
-        if (this.previousCursors.length > 0 || this.hasNextPage) {
-          const navigationItems: NavigationTreeItem[] = []
-
-          if (this.hasNextPage) {
-            navigationItems.push(
-              new NavigationTreeItem('Next Page', 'next-page'),
-            )
-          }
-
-          if (this.previousCursors.length > 0) {
-            navigationItems.push(
-              new NavigationTreeItem('Previous Page', 'previous-page'),
-            )
-
-            if (this.previousCursors.length > 1) {
-              navigationItems.push(
-                new NavigationTreeItem(
-                  'Back to First Page',
-                  'back-to-first-page',
-                ),
-              )
-            }
-          }
-
-          result.push(...navigationItems)
-        }
-
-        return result
-      } catch (error: any) {
-        vscode.window.showErrorMessage(
-          `Failed to load submissions: ${error.message}`,
-        )
-        return [
-          new SubmissionTreeItem(
-            {} as SubmissionBrief,
-            `Error: ${error.message}`,
-          ),
-        ]
+      // Add an option to clear all filters
+      if (this.hasActiveFilters()) {
+        result.push(new ClearFiltersTreeItem())
       }
+
+      // Get the current page of submissions with filters applied
+      const profile = await this.apiClient.getUserProfile()
+      const username = profile.username
+
+      const { submissions, next } = await this.apiClient.getSubmissions(
+        this.currentCursor,
+        username,
+        this.problemIdFilter,
+        this.statusFilter,
+        this.languageFilter,
+      )
+
+      for (const submission of submissions) {
+        if (
+          submission.status === 'pending' ||
+          submission.status === 'compiling' ||
+          submission.status === 'judging'
+        ) {
+          this.apiClient.expireSubmissionCache(submission.id)
+        }
+      }
+
+      this.nextPageCursor = next
+        ? new URLSearchParams(next).get('cursor') || undefined
+        : undefined
+      this.hasNextPage = Boolean(this.nextPageCursor)
+
+      // Add submission items directly as top-level nodes
+      result.push(...submissions.map((s) => new SubmissionTreeItem(s)))
+
+      // Add navigation items at the bottom
+      if (this.previousCursors.length > 0 || this.hasNextPage) {
+        const navigationItems: NavigationTreeItem[] = []
+
+        if (this.hasNextPage) {
+          navigationItems.push(
+            new NavigationTreeItem('Next Page', 'next-page'),
+          )
+        }
+
+        if (this.previousCursors.length > 0) {
+          navigationItems.push(
+            new NavigationTreeItem('Previous Page', 'previous-page'),
+          )
+
+          if (this.previousCursors.length > 1) {
+            navigationItems.push(
+              new NavigationTreeItem(
+                'Back to First Page',
+                'back-to-first-page',
+              ),
+            )
+          }
+        }
+
+        result.push(...navigationItems)
+      }
+
+      return result
+    } catch (error: any) {
+      vscode.window.showErrorMessage(
+        `Failed to load submissions: ${error.message}`,
+      )
+      return [
+        new SubmissionTreeItem(
+          {} as SubmissionBrief,
+          `Error: ${error.message}`,
+        ),
+      ]
     }
   }
 
@@ -286,8 +312,9 @@ export class SubmissionProvider
   }
 }
 
+// Filter group item
 export class FilterGroupTreeItem extends vscode.TreeItem {
-  constructor(hasActiveFilters: boolean) {
+  constructor(hasActiveFilters: boolean, hidden: boolean = false) {
     super(
       'Filters',
       hasActiveFilters
@@ -303,9 +330,39 @@ export class FilterGroupTreeItem extends vscode.TreeItem {
       this.description = 'Active'
       this.iconPath = new vscode.ThemeIcon('filter-filled')
     }
+
+    // Hide this item (used for internal navigation)
+    if (hidden) {
+      this.collapsibleState = vscode.TreeItemCollapsibleState.None
+      this.description = undefined
+    }
   }
 }
 
+// Filter button item
+export class FilterButtonItem extends vscode.TreeItem {
+  constructor(hasActiveFilters: boolean) {
+    super(
+      hasActiveFilters ? 'Filters (Active)' : 'Filters',
+      vscode.TreeItemCollapsibleState.None,
+    )
+
+    this.iconPath = hasActiveFilters
+      ? new vscode.ThemeIcon('filter-filled')
+      : new vscode.ThemeIcon('filter')
+
+    this.tooltip = 'Click to manage filters'
+    this.command = {
+      command: 'acmoj.manageSubmissionFilters',
+      title: 'Manage Submission Filters',
+      arguments: [],
+    }
+
+    this.contextValue = 'filter-button'
+  }
+}
+
+// Filter category item
 export class FilterCategoryTreeItem extends vscode.TreeItem {
   constructor(
     label: string,
@@ -397,6 +454,51 @@ export class NavigationTreeItem extends vscode.TreeItem {
     }
 
     this.contextValue = 'navigation-item'
+  }
+}
+
+// Filter item for displaying current filter states
+export class FilterItemTreeItem extends vscode.TreeItem {
+  constructor(
+    label: string,
+    value: string,
+    public readonly filterType: string,
+  ) {
+    super(`${label}: ${value}`, vscode.TreeItemCollapsibleState.None)
+
+    this.iconPath = new vscode.ThemeIcon('filter')
+    this.contextValue = 'filter-item'
+
+    // Set click command based on filter type
+    if (filterType === 'problemId') {
+      this.command = {
+        command: 'acmoj.setCustomProblemIdFilter',
+        title: 'Set Problem ID Filter',
+        arguments: [],
+      }
+    } else {
+      let commandName = `acmoj.manage${filterType.charAt(0).toUpperCase() + filterType.slice(1)}Filter`
+      this.command = {
+        command: 'acmoj.manageSubmissionFilters',
+        title: `Manage Filters`,
+        arguments: [filterType],
+      }
+    }
+  }
+}
+
+// Clear all filters button
+export class ClearFiltersTreeItem extends vscode.TreeItem {
+  constructor() {
+    super('Clear All Filters', vscode.TreeItemCollapsibleState.None)
+
+    this.iconPath = new vscode.ThemeIcon('clear-all')
+    this.contextValue = 'clear-filters'
+    this.command = {
+      command: 'acmoj.clearAllFilters',
+      title: 'Clear All Filters',
+      arguments: [],
+    }
   }
 }
 
