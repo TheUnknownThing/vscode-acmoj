@@ -1,8 +1,8 @@
 import axios from 'axios' // Needed for direct code fetch if required
 import * as querystring from 'querystring'
-import { ApiClient } from '../core/api' // Adjust path
-import { CacheService } from './cacheService' // Adjust path
-import { SubmissionBrief, Submission } from '../types' // Adjust path
+import { ApiClient } from '../core/api'
+import { CacheService } from './cacheService'
+import { SubmissionBrief, Submission } from '../types'
 
 export class SubmissionService {
   private apiClient: ApiClient

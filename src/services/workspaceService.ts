@@ -3,7 +3,7 @@ import * as vscode from 'vscode'
 import * as path from 'path'
 import { exec } from 'child_process'
 import { promisify } from 'util'
-import { mapLanguageToVscode, getFileExtension } from '../core/utils' // Adjust path
+import { mapLanguageToVscode, getFileExtension } from '../core/utils'
 
 const execAsync = promisify(exec)
 

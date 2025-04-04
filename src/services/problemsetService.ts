@@ -1,6 +1,6 @@
-import { ApiClient } from '../core/api' // Adjust path
-import { CacheService } from './cacheService' // Adjust path
-import { Problemset } from '../types' // Adjust path
+import { ApiClient } from '../core/api'
+import { CacheService } from './cacheService'
+import { Problemset } from '../types'
 
 export class ProblemsetService {
   private apiClient: ApiClient

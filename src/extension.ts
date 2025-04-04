@@ -1,18 +1,18 @@
 // src/extension.ts
 import * as vscode from 'vscode'
-import { AuthService } from './core/auth' 
-import { ApiClient } from './core/api' 
-import { CacheService } from './services/cacheService' 
-import { ProblemService } from './services/problemService' 
-import { SubmissionService } from './services/submissionService' 
-import { ProblemsetService } from './services/problemsetService' 
-import { UserService } from './services/userService' 
+import { AuthService } from './core/auth'
+import { ApiClient } from './core/api'
+import { CacheService } from './services/cacheService'
+import { ProblemService } from './services/problemService'
+import { SubmissionService } from './services/submissionService'
+import { ProblemsetService } from './services/problemsetService'
+import { UserService } from './services/userService'
 import { WorkspaceService } from './services/workspaceService' // NEW: For workspace interactions
-import { ProblemsetProvider } from './views/problemsetProvider' 
-import { SubmissionProvider } from './views/submissionProvider' 
+import { ProblemsetProvider } from './views/problemsetProvider'
+import { SubmissionProvider } from './views/submissionProvider'
 import { registerCommands } from './commands' // Will point to src/commands/index.ts
 import { SubmissionMonitorService } from './services/submissionMonitor' // Keep this service
-import { Profile } from './types' 
+import { Profile } from './types'
 
 // Make services accessible globally within the extension if needed,
 // though dependency injection is preferred.

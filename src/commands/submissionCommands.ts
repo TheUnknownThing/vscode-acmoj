@@ -213,11 +213,6 @@ export function registerSubmissionCommands(
           }),
         )
 
-        // Pre-select suggested language if found
-        const activeItems = mappedLanguage
-          ? languageItems.filter((item) => item.label === mappedLanguage)
-          : []
-
         const selectedLanguageItem = await vscode.window.showQuickPick(
           languageItems,
           {
@@ -225,7 +220,6 @@ export function registerSubmissionCommands(
             placeHolder: 'Choose the submission language',
             canPickMany: false,
             ignoreFocusOut: true,
-            activeItems: activeItems, // Pre-select the suggested item
           },
         )
 

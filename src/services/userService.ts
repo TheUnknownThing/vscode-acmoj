@@ -1,6 +1,6 @@
-import { ApiClient } from '../core/api' // Adjust path
-import { CacheService } from './cacheService' // Adjust path
-import { Profile } from '../types' // Adjust path
+import { ApiClient } from '../core/api' 
+import { CacheService } from './cacheService' 
+import { Profile } from '../types' 
 
 export class UserService {
   private apiClient: ApiClient

@@ -167,8 +167,8 @@ export class SubmissionProvider
       }
 
       // Get the current page of submissions with filters applied
-      const profile = await this.apiClient.getUserProfile()
-      const username = profile.username
+      const profile = await this.authService.getProfile()
+      const username = (profile && profile.username) || undefined
 
       const { submissions, next } = await this.apiClient.getSubmissions(
         this.currentCursor,
