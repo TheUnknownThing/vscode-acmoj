@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { ApiClient } from '../api'
 import { Problemset, ProblemBrief } from '../types'
-import { AuthService } from '../auth'
+import { AuthService } from '../core/auth'
 
 type AcmojTreeItem =
   | CategoryTreeItem

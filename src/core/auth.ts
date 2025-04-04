@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
-import { ApiClient } from './api'
-import { Profile } from './types' // Import Profile type
+import { ApiClient } from '../core/api'
+import { Profile } from '../types' // Import Profile type
 
 const TOKEN_KEY = 'acmoj_personal_access_token'
 const PROFILE_KEY = 'acmoj_user_profile' // Key to store profile in globalState

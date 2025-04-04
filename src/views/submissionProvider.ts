@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { ApiClient } from '../api'
 import { SubmissionBrief, SubmissionStatus } from '../types'
-import { AuthService } from '../auth'
+import { AuthService } from '../core/auth'
 
 // Union type for tree items
 export type SubmissionViewItem =
