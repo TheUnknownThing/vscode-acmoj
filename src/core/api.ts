@@ -11,7 +11,7 @@ export class ApiClient {
   private retryDelay: number
   private baseUrl: string
 
-  constructor(authService: AuthService, context: vscode.ExtensionContext) {
+  constructor(authService: AuthService) {
     this.authService = authService
 
     const config = vscode.workspace.getConfiguration('acmoj')

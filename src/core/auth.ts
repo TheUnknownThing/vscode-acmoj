@@ -98,8 +98,7 @@ export class AuthService {
           this._profile = null // Clear old profile
 
           // Attempt validation and profile fetch
-          const tempApiClient = new ApiClient(this)
-          const profile = await tempApiClient.getUserProfile() // Fetches profile
+          const profile = await new ApiClient(this).get<Profile>('/user/profile')
 
           // If validation passes:
           this._isValidated = true
@@ -182,8 +181,7 @@ export class AuthService {
   public async validateTokenAndFetchProfile(): Promise<Profile | null> {
     if (!this._accessToken) return null
     try {
-      const apiClient = new ApiClient(this) // Use ApiClient
-      const profile = await apiClient.getUserProfile()
+      const profile = await new ApiClient(this).get<Profile>('/user/profile')
       this._isValidated = true
       this._profile = profile
       await this.context.globalState.update(PROFILE_KEY, this._profile)

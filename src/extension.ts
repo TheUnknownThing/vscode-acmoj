@@ -41,7 +41,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // --- Service Instantiation (Order matters for dependencies) ---
   authService = new AuthService(context) // Use constructor DI
   cacheService = new CacheService(cacheTtl)
-  apiClient = new ApiClient(authService, context) // Pass authService and context
+  apiClient = new ApiClient(authService)
   problemService = new ProblemService(apiClient, cacheService)
   submissionService = new SubmissionService(apiClient, cacheService)
   problemsetService = new ProblemsetService(apiClient, cacheService)
@@ -166,7 +166,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // --- Initial Activation Actions ---
   if (authService.isLoggedIn()) {
     // Fetch profile on activation if logged in, to ensure status bar is accurate
-    authService.getProfile().then((profile) => updateStatusBar(profile))
+    updateStatusBar(await authService.getProfile())
     // Initial refresh can be triggered here or rely on view visibility change
     // problemsetProvider.refresh();
     // submissionProvider.refresh();
