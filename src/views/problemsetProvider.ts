@@ -54,9 +54,8 @@ export class ProblemsetProvider
       // Fetch all problemsets if not already fetched in this cycle
       if (this.allProblemsets === null) {
         try {
-          const { problemsets } =
+          this.allProblemsets =
             await this.problemsetService.getUserProblemsets()
-          this.allProblemsets = problemsets
         } catch (error: any) {
           vscode.window.showErrorMessage(
             `Failed to load problemsets: ${error.message}`,
@@ -85,9 +84,8 @@ export class ProblemsetProvider
           'Problemsets not loaded when expanding category, fetching again.',
         )
         try {
-          const { problemsets } =
+          this.allProblemsets =
             await this.problemsetService.getUserProblemsets()
-          this.allProblemsets = problemsets
         } catch (error: any) {
           return [
             new vscode.TreeItem(

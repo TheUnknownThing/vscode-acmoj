@@ -195,8 +195,8 @@
     "watch": "tsc -watch -p ./",
     "watch:tsc": "tsc --watch",
     "watch:esbuild": "esbuild src/extension.ts --bundle --platform=node --outdir=out --external:vscode --watch",
-    "lint": "eslint src --ext ts",
-    "lint:fix": "eslint src --ext ts --fix",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.ts\" \"src/*.ts\"",
     "prepare": "husky install"
   },

@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import { getNonce } from '../core/utils'
 
 export abstract class BasePanel {
-  protected static readonly viewType = 'acmojBasePanel'
+  protected static readonly viewType: string
   protected readonly panel: vscode.WebviewPanel
   protected readonly extensionUri: vscode.Uri
   protected disposables: vscode.Disposable[] = []

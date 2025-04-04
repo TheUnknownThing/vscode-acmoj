@@ -184,7 +184,7 @@ export class SubmissionProvider
           submission.status === 'compiling' ||
           submission.status === 'judging'
         ) {
-          this.submissionService.expireSubmissionCache(submission.id)
+          this.submissionService.clearSubmissionDetailCache(submission.id)
         }
       }
 
