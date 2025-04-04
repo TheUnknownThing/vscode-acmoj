@@ -105,15 +105,14 @@ export class ApiClient {
             `API request unauthorized (401) for ${originalRequest.url}. Invalidating token.`,
           )
           // Avoid infinite loops if token refresh itself fails
-          
-            await this.authService.handleUnauthorizedError()
-            // Reject immediately, no retry for 401
-            return Promise.reject(
-              new Error(
-                'Authentication failed (401). Please check your Personal Access Token.',
-              ),
-            )
-          
+
+          await this.authService.handleUnauthorizedError()
+          // Reject immediately, no retry for 401
+          return Promise.reject(
+            new Error(
+              'Authentication failed (401). Please check your Personal Access Token.',
+            ),
+          )
         }
 
         // Extract API error message if available

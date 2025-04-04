@@ -98,7 +98,9 @@ export class AuthService {
           this._profile = null // Clear old profile
 
           // Attempt validation and profile fetch
-          const profile = await new ApiClient(this).get<Profile>('/user/profile')
+          const profile = await new ApiClient(this).get<Profile>(
+            '/user/profile',
+          )
 
           // If validation passes:
           this._isValidated = true

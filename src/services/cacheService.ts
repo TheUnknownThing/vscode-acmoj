@@ -66,6 +66,14 @@ export class CacheService {
   }
 
   /**
+   * Dispose of the cache service
+   * This is a no-op in this implementation but can be used for cleanup if needed
+   */
+  dispose(): void {
+    // No-op for now
+  }
+
+  /**
    * Clean expired cache entries
    */
   private cleanExpiredEntries(): void {

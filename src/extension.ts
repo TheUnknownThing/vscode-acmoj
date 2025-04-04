@@ -7,7 +7,7 @@ import { ProblemService } from './services/problemService'
 import { SubmissionService } from './services/submissionService'
 import { ProblemsetService } from './services/problemsetService'
 import { UserService } from './services/userService'
-import { WorkspaceService } from './services/workspaceService' // NEW: For workspace interactions
+import { WorkspaceService } from './services/workspaceService'
 import { ProblemsetProvider } from './views/problemsetProvider'
 import { SubmissionProvider } from './views/submissionProvider'
 import { registerCommands } from './commands' // Will point to src/commands/index.ts
@@ -48,23 +48,20 @@ export async function activate(context: vscode.ExtensionContext) {
   userService = new UserService(apiClient, cacheService)
   workspaceService = new WorkspaceService() // Instantiate WorkspaceService
   // SubmissionMonitor needs SubmissionService now
-  submissionMonitor = new SubmissionMonitorService(apiClient, cacheService, submissionService, submissionProvider)
+  submissionMonitor = new SubmissionMonitorService(
+    apiClient,
+    cacheService,
+    submissionService,
+    submissionProvider,
+  )
 
   context.subscriptions.push(authService) // Ensure authService is disposed if needed
   context.subscriptions.push({ dispose: () => cacheService.dispose() }) // Dispose cache
 
   // --- View Provider Registration ---
   // Inject only the services they *need*
-  problemsetProvider = new ProblemsetProvider(
-    problemService,
-    problemsetService,
-    authService,
-  )
-  submissionProvider = new SubmissionProvider(
-    submissionService,
-    userService,
-    authService,
-  ) // Pass needed services
+  problemsetProvider = new ProblemsetProvider(problemsetService, authService)
+  submissionProvider = new SubmissionProvider(submissionService, authService) // Pass needed services
 
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider(
