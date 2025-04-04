@@ -5,7 +5,7 @@ import { AuthService } from '../core/auth'
 import { SubmissionService } from '../services/submissionService'
 import { ProblemService } from '../services/problemService'
 import { WorkspaceService } from '../services/workspaceService'
-import { SubmissionMonitorService } from '../submissionMonitor'
+import { SubmissionMonitorService } from '../services/submissionMonitor'
 import { SubmissionDetailPanel } from '../webviews/submissionDetailPanel' // Use new panel class
 import { SubmissionProvider } from '../views/submissionProvider' // Needed for refresh after submit/abort
 
@@ -126,7 +126,7 @@ export function registerSubmissionCommands(
           ) // Fetch code via service
           const title = `Submission ${args.submissionId}${args.problemId ? ` (P${args.problemId})` : ''}`
           // Use utility function or WorkspaceService method to open
-          await workspaceService.openCodeInEditor(code, args.language, title) // Assuming WorkspaceService has this
+          await workspaceService.openCodeInEditor(code, args.language, title)
         } catch (error: any) {
           vscode.window.showErrorMessage(
             `Failed to open submission code: ${error.message}`,

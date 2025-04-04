@@ -1,18 +1,18 @@
 // src/extension.ts
 import * as vscode from 'vscode'
-import { AuthService } from './core/auth' // Adjusted path
-import { ApiClient } from './core/api' // Adjusted path
-import { CacheService } from './services/cacheService' // Adjusted path
-import { ProblemService } from './services/problemService' // Adjusted path
-import { SubmissionService } from './services/submissionService' // Adjusted path
-import { ProblemsetService } from './services/problemsetService' // Adjusted path
-import { UserService } from './services/userService' // Adjusted path
+import { AuthService } from './core/auth' 
+import { ApiClient } from './core/api' 
+import { CacheService } from './services/cacheService' 
+import { ProblemService } from './services/problemService' 
+import { SubmissionService } from './services/submissionService' 
+import { ProblemsetService } from './services/problemsetService' 
+import { UserService } from './services/userService' 
 import { WorkspaceService } from './services/workspaceService' // NEW: For workspace interactions
-import { ProblemsetProvider } from './views/problemsetProvider' // Adjusted path
-import { SubmissionProvider } from './views/submissionProvider' // Adjusted path
+import { ProblemsetProvider } from './views/problemsetProvider' 
+import { SubmissionProvider } from './views/submissionProvider' 
 import { registerCommands } from './commands' // Will point to src/commands/index.ts
-import { SubmissionMonitorService } from './submissionMonitor' // Keep this service
-import { Profile } from './types' // Adjusted path
+import { SubmissionMonitorService } from './services/submissionMonitor' // Keep this service
+import { Profile } from './types' 
 
 // Make services accessible globally within the extension if needed,
 // though dependency injection is preferred.
@@ -39,7 +39,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const cacheTtl = config.get<number>('cacheDefaultTtlMinutes', 15)
 
   // --- Service Instantiation (Order matters for dependencies) ---
-  authService = new AuthService(context.globalState, context.secrets) // Use constructor DI
+  authService = new AuthService(context) // Use constructor DI
   cacheService = new CacheService(cacheTtl)
   apiClient = new ApiClient(authService, context) // Pass authService and context
   problemService = new ProblemService(apiClient, cacheService)

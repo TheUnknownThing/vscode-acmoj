@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { ApiClient } from '../api'
+import { ApiClient } from '../core/api'
 import { SubmissionBrief, SubmissionStatus } from '../types'
 import { AuthService } from '../core/auth'
 
@@ -55,6 +55,13 @@ export class SubmissionProvider
 
   setStatusFilter(status: string | undefined): void {
     this.statusFilter = status
+    this.resetPagination()
+  }
+
+  clearFilters(): void {
+    this.statusFilter = undefined
+    this.problemIdFilter = undefined
+    this.languageFilter = undefined
     this.resetPagination()
   }
 

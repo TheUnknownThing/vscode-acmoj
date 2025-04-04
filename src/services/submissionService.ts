@@ -78,14 +78,13 @@ export class SubmissionService {
     // Check cache first, but fetch function will always call API
     // unless the submission is already terminal (Accepted, WA, TLE etc.)
 
-    const cached = this.cacheService.cache.get(cacheKey) // Access internal cache map for check
-    if (
-      cached &&
-      this.isTerminalStatus(cached.data.status) &&
-      cached.expiry > Date.now()
-    ) {
-      // console.log(`[Cache HIT] Terminal Submission ${submissionId}`);
-      return cached.data
+    const cached = this.cacheService.get<Submission>(cacheKey)
+    if (cached) {
+      // Check if cached submission is terminal
+      if (this.isTerminalStatus(cached.status)) {
+        // console.log(`[Cache HIT] Submission ${submissionId}`);
+        return cached
+      }
     }
 
     // Fetch always if not terminal or not cached/expired

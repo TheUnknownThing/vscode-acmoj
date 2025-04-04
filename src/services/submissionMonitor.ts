@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
-import { ApiClient } from './api'
-import { SubmissionProvider } from './views/submissionProvider'
-import { Submission } from './types'
+import { ApiClient } from '../core/api'
+import { SubmissionProvider } from '../views/submissionProvider'
+import { Submission } from '../types'
 
 /**
  * Submission monitoring service

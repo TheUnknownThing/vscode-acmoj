@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { ApiClient } from '../api'
+import { ApiClient } from '../core/api'
 import { Problemset, ProblemBrief } from '../types'
 import { AuthService } from '../core/auth'
 

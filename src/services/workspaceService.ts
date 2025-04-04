@@ -16,6 +16,43 @@ export class WorkspaceService {
     return vscode.window.activeTextEditor?.document
   }
 
+  openCodeInEditor(
+    code: string,
+    language: string,
+    title: string,
+  ): Promise<void> {
+    if (!code) {
+      return Promise.reject(new Error('Cannot open empty code in editor.'))
+    }
+    return new Promise((resolve, reject) => {
+      const languageId = mapLanguageToVscode(language)
+      const fileExtension = getFileExtension(languageId)
+      const tempFileName = `temp.${fileExtension}`
+      const tempFilePath = path.join(
+        vscode.workspace.workspaceFolders![0].uri.fsPath,
+        tempFileName,
+      )
+
+      // Create a temporary file with the code
+      vscode.workspace.fs
+        .writeFile(vscode.Uri.file(tempFilePath), Buffer.from(code, 'utf-8'))
+        .then(() => {
+          // Open the temporary file in a new editor
+          vscode.workspace.openTextDocument(vscode.Uri.file(tempFilePath)).then(
+            (doc) => {
+              vscode.window
+                .showTextDocument(doc, {
+                  viewColumn: vscode.ViewColumn.Beside,
+                  preserveFocus: true,
+                })
+                .then(() => resolve(), reject)
+            },
+            (err) => reject(err),
+          )
+        }, reject)
+    })
+  }
+
   async saveActiveDocument(): Promise<boolean> {
     const document = this.getActiveDocument()
     if (document && document.isDirty) {

@@ -14,7 +14,7 @@ export function registerAuthCommands(
 ) {
   context.subscriptions.push(
     vscode.commands.registerCommand('acmoj.setToken', async () => {
-      const success = await authService.setTokenWithValidation() // Use validation method
+      const success = await authService.setToken() // Use validation method
       if (success) {
         // Refresh handled by onDidChangeLoginStatus listener in extension.ts
         // problemsetProvider.refresh();
