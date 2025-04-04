@@ -9,8 +9,8 @@ import { ProblemsetService } from '../services/problemsetService'
 import { UserService } from '../services/userService'
 import { WorkspaceService } from '../services/workspaceService'
 import { SubmissionMonitorService } from '../services/submissionMonitor'
-import { ProblemsetProvider } from '../views/problemsetProvider' // Keep if needed for filters etc.
-import { SubmissionProvider } from '../views/submissionProvider' // Keep if needed for filters etc.
+import { ProblemsetProvider } from '../views/problemsetProvider'
+import { SubmissionProvider } from '../views/submissionProvider'
 
 // Import command handlers
 import { registerAuthCommands } from './authCommands'
