@@ -94,7 +94,8 @@ export class SubmissionDetailPanel extends BasePanel {
         try {
           codeContent = await this.submissionService.getSubmissionCode(
             submission.id,
-          ) // Assuming service method takes ID
+            submission.code_url,
+          )
         } catch (codeError: any) {
           console.error(
             `Error loading code for submission ${this.submissionId}:`,
@@ -134,10 +135,7 @@ export class SubmissionDetailPanel extends BasePanel {
       case 'viewProblem':
         // Trigger the command to show problem details
         if (message.problemId) {
-          vscode.commands.executeCommand(
-            'acmoj.showProblemDetails',
-            message.problemId,
-          )
+          vscode.commands.executeCommand('acmoj.viewProblem', message.problemId)
         }
         return
 
@@ -145,9 +143,9 @@ export class SubmissionDetailPanel extends BasePanel {
         // Trigger the command to open code, passing necessary info
         vscode.commands.executeCommand('acmoj.openSubmissionCode', {
           submissionId: submission.id,
+          codeUrl: submission.code_url,
           language: submission.language,
           problemId: submission.problem?.id,
-          // The command handler will fetch the code again using the service
         })
         return
     }

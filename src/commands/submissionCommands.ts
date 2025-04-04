@@ -109,6 +109,7 @@ export function registerSubmissionCommands(
       'acmoj.openSubmissionCode',
       async (args: {
         submissionId: number
+        codeUrl: string
         language: string
         problemId?: number
       }) => {
@@ -123,8 +124,9 @@ export function registerSubmissionCommands(
         try {
           const code = await submissionService.getSubmissionCode(
             args.submissionId,
+            args.codeUrl,
           ) // Fetch code via service
-          const title = `Submission ${args.submissionId}${args.problemId ? ` (P${args.problemId})` : ''}`
+          const title = `Submission ${args.submissionId}`
           // Use utility function or WorkspaceService method to open
           await workspaceService.openCodeInEditor(code, args.language, title)
         } catch (error: any) {

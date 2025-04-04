@@ -164,22 +164,7 @@ export class SubmissionMonitorService {
     submissionId: number,
     submission: Submission,
   ) {
-    const statusIconMap: Record<string, string> = {
-      Accepted: '$(check)',
-      'Wrong Answer': '$(x)',
-      'Time Limit Exceeded': '$(watch)',
-      'Memory Limit Exceeded': '$(database)',
-      'Runtime Error': '$(error)',
-      'Compilation Error': '$(tools)',
-      Queued: '$(history)',
-      Running: '$(sync)',
-      'System Error': '$(warning)',
-      Aborted: '$(stop)',
-      Canceled: '$(circle-slash)',
-    }
-
-    const icon = statusIconMap[submission.status] || '$(question)'
-    const message = `Submission #${submissionId} ${icon} ${submission.status}`
+    const message = `Submission #${submissionId} ${submission.status}`
 
     if (this.isTerminalStatus(submission.status)) {
       // Show details button for terminal status

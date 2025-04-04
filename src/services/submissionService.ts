@@ -121,18 +121,8 @@ export class SubmissionService {
     submissionId: number,
     codeUrl?: string,
   ): Promise<string> {
-    // Prefer using a dedicated API endpoint if available, otherwise fallback to codeUrl
-    // Example: Assume there's an endpoint `/submission/{id}/code`
-    // const codeEndpoint = `/submission/${submissionId}/code`;
-
-    // For now, stick to the original logic using codeUrl if provided
     if (!codeUrl) {
-      // Maybe fetch submission details first to get the codeUrl if not provided?
-      // const details = await this.getSubmissionDetails(submissionId);
-      // codeUrl = details.code_url;
-      // if (!codeUrl) {
       throw new Error(`Code URL not available for submission ${submissionId}`)
-      // }
     }
 
     const cacheKey = `submission:code:${submissionId}` // Use submission ID for cache key
