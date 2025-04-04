@@ -48,7 +48,7 @@ export async function activate(context: vscode.ExtensionContext) {
   userService = new UserService(apiClient, cacheService)
   workspaceService = new WorkspaceService() // Instantiate WorkspaceService
   // SubmissionMonitor needs SubmissionService now
-  submissionMonitor = new SubmissionMonitorService(submissionService) // Pass SubmissionService
+  submissionMonitor = new SubmissionMonitorService(apiClient, cacheService, submissionService, submissionProvider)
 
   context.subscriptions.push(authService) // Ensure authService is disposed if needed
   context.subscriptions.push({ dispose: () => cacheService.dispose() }) // Dispose cache

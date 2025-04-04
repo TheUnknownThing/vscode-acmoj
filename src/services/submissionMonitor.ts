@@ -1,7 +1,9 @@
 import * as vscode from 'vscode'
 import { ApiClient } from '../core/api'
 import { SubmissionProvider } from '../views/submissionProvider'
+import { SubmissionService } from './submissionService'
 import { Submission } from '../types'
+import { CacheService } from './cacheService'
 
 /**
  * Submission monitoring service
@@ -15,6 +17,8 @@ export class SubmissionMonitorService {
 
   constructor(
     private apiClient: ApiClient,
+    private cacheService: CacheService,
+    private submissionService: SubmissionService,
     private submissionProvider: SubmissionProvider,
   ) {
     // Read monitoring interval from configuration
@@ -82,10 +86,10 @@ export class SubmissionMonitorService {
     ] of this.monitoredSubmissions.entries()) {
       try {
         // Clear this submission's cache first to ensure we get the latest status
-        this.apiClient.getCacheService().delete(`submission:${submissionId}`)
+        this.cacheService.delete(`submission:${submissionId}`)
 
         const submission =
-          await this.apiClient.getSubmissionDetails(submissionId)
+          await this.submissionService.getSubmissionDetails(submissionId)
         const currentStatus = submission.status
 
         // If the status has changed
@@ -100,7 +104,7 @@ export class SubmissionMonitorService {
           this.showStatusChangeNotification(submissionId, submission)
 
           // Clear submission list cache to ensure we get the latest data on refresh
-          this.apiClient.getCacheService().deleteWithPrefix('submissions:')
+          this.cacheService.deleteWithPrefix('submissions:')
         }
 
         // If the submission has been processed, remove from monitoring
@@ -127,7 +131,7 @@ export class SubmissionMonitorService {
     // If there are status changes, force refresh the submission list
     if (hasChanges) {
       // Clear list cache first
-      this.apiClient.clearCache()
+      this.cacheService.deleteWithPrefix('submissions:list:')
       // Then refresh the view
       this.submissionProvider.refresh()
     }
@@ -197,8 +201,8 @@ export class SubmissionMonitorService {
    */
   private getMonitoringAttempts(submissionId: number): number {
     const key = `monitor_attempts_${submissionId}`
-    const attempts = Number(this.apiClient.getCacheService().get(key) || 0)
-    this.apiClient.getCacheService().set(key, attempts + 1, 10) // Store for 10 minutes
+    const attempts = Number(this.cacheService.get(key) || 0)
+    this.cacheService.set(key, attempts + 1, 10) // Store for 10 minutes
     return attempts
   }
 }

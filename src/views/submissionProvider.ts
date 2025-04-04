@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
-import { ApiClient } from '../core/api'
 import { SubmissionBrief, SubmissionStatus } from '../types'
 import { AuthService } from '../core/auth'
+import { SubmissionService } from '../services/submissionService'
 
 // Union type for tree items
 export type SubmissionViewItem =
@@ -35,7 +35,7 @@ export class SubmissionProvider
   private languageFilter: string | undefined = undefined
 
   constructor(
-    private apiClient: ApiClient,
+    private submissionService: SubmissionService,
     private authService: AuthService,
   ) {
     authService.onDidChangeLoginStatus(() => this.refresh())
@@ -170,7 +170,7 @@ export class SubmissionProvider
       const profile = await this.authService.getProfile()
       const username = (profile && profile.username) || undefined
 
-      const { submissions, next } = await this.apiClient.getSubmissions(
+      const { submissions, next } = await this.submissionService.getSubmissions(
         this.currentCursor,
         username,
         this.problemIdFilter,
@@ -184,7 +184,7 @@ export class SubmissionProvider
           submission.status === 'compiling' ||
           submission.status === 'judging'
         ) {
-          this.apiClient.expireSubmissionCache(submission.id)
+          this.submissionService.expireSubmissionCache(submission.id)
         }
       }
 
