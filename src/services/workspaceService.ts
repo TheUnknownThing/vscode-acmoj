@@ -19,37 +19,49 @@ export class WorkspaceService {
   openCodeInEditor(
     code: string,
     language: string,
-    title: string,
+    submissionId: number,
   ): Promise<void> {
     if (!code) {
-      return Promise.reject(new Error('Cannot open empty code in editor.'))
+      throw new Error('Code content is empty or not available.')
     }
+
+    /*
+    const languageId = mapLanguageToVscode(language)
+  
+    const doc = await vscode.workspace.openTextDocument({
+      content: code,
+      language: languageId,
+    })
+  
+    await vscode.window.showTextDocument(doc)
+  
+    vscode.window.showInformationMessage(
+      `Have opened code for submission #${submissionId} in ${languageId} editor.`,
+    )*/
+
     return new Promise((resolve, reject) => {
       const languageId = mapLanguageToVscode(language)
       const fileExtension = getFileExtension(languageId)
-      const tempFileName = `temp.${fileExtension}`
+      const tempFileName = `temp_code-${submissionId}.${fileExtension}`
       const tempFilePath = path.join(
         vscode.workspace.workspaceFolders![0].uri.fsPath,
         tempFileName,
       )
-
-      // Create a temporary file with the code
-      vscode.workspace.fs
-        .writeFile(vscode.Uri.file(tempFilePath), Buffer.from(code, 'utf-8'))
-        .then(() => {
-          // Open the temporary file in a new editor
-          vscode.workspace.openTextDocument(vscode.Uri.file(tempFilePath)).then(
-            (doc) => {
-              vscode.window
-                .showTextDocument(doc, {
-                  viewColumn: vscode.ViewColumn.Beside,
-                  preserveFocus: true,
-                })
-                .then(() => resolve(), reject)
-            },
-            (err) => reject(err),
-          )
+      const tempFileUri = vscode.Uri.file(tempFilePath)
+      const tempFileContent = code
+      const edit = new vscode.WorkspaceEdit()
+      edit.createFile(tempFileUri, { ignoreIfExists: true })
+      edit.insert(tempFileUri, new vscode.Position(0, 0), tempFileContent)
+      vscode.workspace.applyEdit(edit).then(() => {
+        vscode.workspace.openTextDocument(tempFileUri).then((document) => {
+          vscode.window.showTextDocument(document).then(() => {
+            vscode.window.showInformationMessage(
+              `Opened code in ${languageId} editor.`,
+            )
+            resolve()
+          }, reject)
         }, reject)
+      })
     })
   }
 

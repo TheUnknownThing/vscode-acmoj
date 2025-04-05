@@ -126,9 +126,14 @@ export function registerSubmissionCommands(
             args.submissionId,
             args.codeUrl,
           ) // Fetch code via service
-          const title = `Submission ${args.submissionId}`
-          // Use utility function or WorkspaceService method to open
-          await workspaceService.openCodeInEditor(code, args.language, title)
+          console.log(
+            `The code is ${code} and the language is ${args.language} and the submissionId is ${args.submissionId}`,
+          )
+          await workspaceService.openCodeInEditor(
+            code,
+            args.language,
+            args.submissionId,
+          )
         } catch (error: any) {
           vscode.window.showErrorMessage(
             `Failed to open submission code: ${error.message}`,

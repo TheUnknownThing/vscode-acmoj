@@ -101,7 +101,7 @@ export class SubmissionDetailPanel extends BasePanel {
             `Error loading code for submission ${this.submissionId}:`,
             codeError,
           )
-          codeContent = `Error loading code: ${escapeHtml(codeError.message)}`
+          codeContent = `Error loading code: ${escapeHtml(codeError.message)} However, you could still try to open it in the editor.`
         }
       } else {
         codeContent = 'Code not available or permission denied.'
@@ -180,14 +180,10 @@ export class SubmissionDetailPanel extends BasePanel {
             ${abortButtonHtml}
 
             <div class="section">
-                <h2>Details</h2>
+                <h2>Submission Overview</h2>
                 <p><span class="label">Problem:</span> <a href="#" id="problem-link" data-problem-id="${submission.problem?.id}">${submission.problem?.id}: ${problemTitleHtml}</a></p>
                 <p><span class="label">User:</span> ${friendlyNameHtml}</p>
-                <p><span class="label">Status:</span> <strong class="${statusClass}">${submission.status}</strong></p>
-                ${submission.should_show_score && submission.score !== null ? `<p><span class="label">Score:</span> ${submission.score}</p>` : ''}
                 <p><span class="label">Language:</span> ${submission.language}</p>
-                <p><span class="label">Time:</span> ${submission.time_msecs !== null ? `${submission.time_msecs} ms` : 'N/A'}</p>
-                <p><span class="label">Memory:</span> ${submission.memory_bytes !== null ? `${(submission.memory_bytes / 1024 / 1024).toFixed(2)} MB` : 'N/A'}</p>
                 <p><span class="label">Submitted At:</span> ${new Date(submission.created_at).toLocaleString()}</p>
                 ${messageHtml}
             </div>
@@ -232,8 +228,6 @@ export class SubmissionDetailPanel extends BasePanel {
 
   // Keep your _formatJudgeDetails function here as a private method
   private _formatJudgeDetails(details: any): string {
-    // ... (Keep your existing formatJudgeDetails implementation here) ...
-    // Make sure to use escapeHtml where necessary if not already done.
     if (!details) {
       return ''
     }
@@ -242,7 +236,7 @@ export class SubmissionDetailPanel extends BasePanel {
 
     const summaryHtml = `
             <div class="judge-summary">
-            <h3>Summary</h3>
+            <h3 style="margin-top: 0;">Summary</h3>
             <div class="judge-summary-grid">
                 <div><strong>Result:</strong> <span class="${resultClass}">${escapeHtml(details.result.toUpperCase())}</span></div>
                 <div><strong>Score:</strong> ${details.score}/100</div>
