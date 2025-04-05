@@ -1,4 +1,3 @@
-// src/services/workspaceService.ts
 import * as vscode from 'vscode'
 import * as path from 'path'
 import { exec } from 'child_process'
@@ -16,7 +15,7 @@ export class WorkspaceService {
     return vscode.window.activeTextEditor?.document
   }
 
-  openCodeInEditor(
+  async openCodeInEditor(
     code: string,
     language: string,
     submissionId: number,
@@ -25,7 +24,6 @@ export class WorkspaceService {
       throw new Error('Code content is empty or not available.')
     }
 
-    /*
     const languageId = mapLanguageToVscode(language)
   
     const doc = await vscode.workspace.openTextDocument({
@@ -36,33 +34,8 @@ export class WorkspaceService {
     await vscode.window.showTextDocument(doc)
   
     vscode.window.showInformationMessage(
-      `Have opened code for submission #${submissionId} in ${languageId} editor.`,
-    )*/
-
-    return new Promise((resolve, reject) => {
-      const languageId = mapLanguageToVscode(language)
-      const fileExtension = getFileExtension(languageId)
-      const tempFileName = `temp_code-${submissionId}.${fileExtension}`
-      const tempFilePath = path.join(
-        vscode.workspace.workspaceFolders![0].uri.fsPath,
-        tempFileName,
-      )
-      const tempFileUri = vscode.Uri.file(tempFilePath)
-      const tempFileContent = code
-      const edit = new vscode.WorkspaceEdit()
-      edit.createFile(tempFileUri, { ignoreIfExists: true })
-      edit.insert(tempFileUri, new vscode.Position(0, 0), tempFileContent)
-      vscode.workspace.applyEdit(edit).then(() => {
-        vscode.workspace.openTextDocument(tempFileUri).then((document) => {
-          vscode.window.showTextDocument(document).then(() => {
-            vscode.window.showInformationMessage(
-              `Opened code in ${languageId} editor.`,
-            )
-            resolve()
-          }, reject)
-        }, reject)
-      })
-    })
+      `Opened code for submission #${submissionId} in ${languageId} editor.`,
+    )
   }
 
   async saveActiveDocument(): Promise<boolean> {

@@ -1,4 +1,3 @@
-// src/commands/submissionCommands.ts
 import * as vscode from 'vscode'
 import * as path from 'path'
 import { AuthService } from '../core/auth'
@@ -126,9 +125,6 @@ export function registerSubmissionCommands(
             args.submissionId,
             args.codeUrl,
           ) // Fetch code via service
-          console.log(
-            `The code is ${code} and the language is ${args.language} and the submissionId is ${args.submissionId}`,
-          )
           await workspaceService.openCodeInEditor(
             code,
             args.language,

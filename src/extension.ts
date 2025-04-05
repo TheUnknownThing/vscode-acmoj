@@ -1,4 +1,3 @@
-// src/extension.ts
 import * as vscode from 'vscode'
 import { AuthService } from './core/auth'
 import { ApiClient } from './core/api'

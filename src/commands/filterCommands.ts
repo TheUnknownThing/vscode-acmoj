@@ -1,11 +1,9 @@
-// src/commands/filterCommands.ts
 import * as vscode from 'vscode'
 import { AuthService } from '../core/auth'
 import { SubmissionProvider } from '../views/submissionProvider'
 
 // Helper function for login check
 async function checkLoginAndPrompt(authService: AuthService): Promise<boolean> {
-  // ... (same implementation as in other command files) ...
   if (!authService.isLoggedIn()) {
     const selection = await vscode.window.showWarningMessage(
       'Please set your ACMOJ Personal Access Token first.',

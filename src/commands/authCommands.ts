@@ -1,4 +1,3 @@
-// src/commands/authCommands.ts
 import * as vscode from 'vscode'
 import { AuthService } from '../core/auth'
 import { UserService } from '../services/userService'

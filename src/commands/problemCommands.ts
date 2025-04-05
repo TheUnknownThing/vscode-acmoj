@@ -1,4 +1,3 @@
-// src/commands/problemCommands.ts
 import * as vscode from 'vscode'
 import { AuthService } from '../core/auth'
 import { ProblemService } from '../services/problemService'
