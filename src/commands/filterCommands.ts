@@ -2,23 +2,6 @@ import * as vscode from 'vscode'
 import { AuthService } from '../core/auth'
 import { SubmissionProvider } from '../views/submissionProvider'
 
-// Helper function for login check
-async function checkLoginAndPrompt(authService: AuthService): Promise<boolean> {
-  if (!authService.isLoggedIn()) {
-    const selection = await vscode.window.showWarningMessage(
-      'Please set your ACMOJ Personal Access Token first.',
-      'Set Token',
-      'Cancel',
-    )
-    if (selection === 'Set Token') {
-      await vscode.commands.executeCommand('acmoj.setToken')
-      return authService.isLoggedIn()
-    }
-    return false
-  }
-  return true
-}
-
 export function registerFilterCommands(
   context: vscode.ExtensionContext,
   authService: AuthService,
@@ -52,7 +35,7 @@ export function registerFilterCommands(
     vscode.commands.registerCommand(
       'acmoj.setCustomProblemIdFilter',
       async () => {
-        if (!(await checkLoginAndPrompt(authService))) return
+        if (!(await authService.checkLoginAndPrompt)) return
         const problemId = await vscode.window.showInputBox({
           placeHolder: 'Enter problem ID (leave blank for All)',
           validateInput: (value) => {

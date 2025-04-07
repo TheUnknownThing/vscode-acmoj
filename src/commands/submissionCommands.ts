@@ -4,26 +4,9 @@ import { AuthService } from '../core/auth'
 import { SubmissionService } from '../services/submissionService'
 import { ProblemService } from '../services/problemService'
 import { WorkspaceService } from '../services/workspaceService'
-import { SubmissionMonitorService } from '../services/submissionMonitor'
+import { SubmissionMonitorService } from '../services/submissionMonitorService'
 import { SubmissionDetailPanel } from '../webviews/submissionDetailPanel' // Use new panel class
 import { SubmissionProvider } from '../views/submissionProvider' // Needed for refresh after submit/abort
-
-// Helper function for login check (can be moved to a shared utility)
-async function checkLoginAndPrompt(authService: AuthService): Promise<boolean> {
-  if (!authService.isLoggedIn()) {
-    const selection = await vscode.window.showWarningMessage(
-      'Please set your ACMOJ Personal Access Token first.',
-      'Set Token',
-      'Cancel',
-    )
-    if (selection === 'Set Token') {
-      await vscode.commands.executeCommand('acmoj.setToken')
-      return authService.isLoggedIn()
-    }
-    return false
-  }
-  return true
-}
 
 export function registerSubmissionCommands(
   context: vscode.ExtensionContext,
@@ -44,7 +27,7 @@ export function registerSubmissionCommands(
           return
         }
 
-        if (!(await checkLoginAndPrompt(authService))) return
+        if (!(await authService.checkLoginAndPrompt)) return
 
         try {
           // Use the static method on the Panel class
@@ -70,7 +53,7 @@ export function registerSubmissionCommands(
           )
           return
         }
-        if (!(await checkLoginAndPrompt(authService))) return
+        if (!(await authService.checkLoginAndPrompt)) return
 
         const confirm = await vscode.window.showQuickPick(['Yes', 'No'], {
           placeHolder: `Abort submission #${submissionId}? This cannot be undone.`,
@@ -90,9 +73,7 @@ export function registerSubmissionCommands(
               vscode.window.showInformationMessage(
                 `Submission #${submissionId} aborted.`,
               )
-              submissionProvider.refresh() // Refresh the view
-              // Optionally update any open webview for this submission
-              // SubmissionDetailPanel.refreshIfExists(submissionId);
+              submissionProvider.refresh()
             } catch (error: any) {
               vscode.window.showErrorMessage(
                 `Failed to abort submission #${submissionId}: ${error.message}`,
@@ -118,7 +99,7 @@ export function registerSubmissionCommands(
           )
           return
         }
-        if (!(await checkLoginAndPrompt(authService))) return
+        if (!(await authService.checkLoginAndPrompt)) return
 
         try {
           const code = await submissionService.getSubmissionCode(
@@ -142,7 +123,7 @@ export function registerSubmissionCommands(
     vscode.commands.registerCommand(
       'acmoj.submitCurrentFile',
       async (contextArgs?: number | { problemId?: number }) => {
-        if (!(await checkLoginAndPrompt(authService))) return
+        if (!(await authService.checkLoginAndPrompt)) return
 
         const editor = workspaceService.getActiveEditor()
         if (!editor) {
@@ -300,9 +281,7 @@ export function registerSubmissionCommands(
                 `Successfully submitted P${problemId}. Submission ID: ${result.id}`,
               )
               submissionProvider.refresh() // Refresh submission list
-              submissionMonitor.addSubmission(result.id) // Start monitoring
-              // Optional: Open submission details after a short delay
-              // setTimeout(() => vscode.commands.executeCommand('acmoj.viewSubmission', result.id), 2000);
+              submissionMonitor.addSubmission(result.id)
             } catch (error: any) {
               vscode.window.showErrorMessage(
                 `Submission failed for P${problemId}: ${error.message}`,
@@ -311,6 +290,6 @@ export function registerSubmissionCommands(
           },
         )
       },
-    ), // End submitCurrentFile
-  ) // End context.subscriptions.push
-} // End registerSubmissionCommands
+    ),
+  )
+}

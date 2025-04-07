@@ -10,7 +10,7 @@ import { WorkspaceService } from './services/workspaceService'
 import { ProblemsetProvider } from './views/problemsetProvider'
 import { SubmissionProvider } from './views/submissionProvider'
 import { registerCommands } from './commands'
-import { SubmissionMonitorService } from './services/submissionMonitor'
+import { SubmissionMonitorService } from './services/submissionMonitorService'
 import { Profile } from './types'
 
 let authService: AuthService

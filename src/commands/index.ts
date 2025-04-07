@@ -4,7 +4,7 @@ import { ProblemService } from '../services/problemService'
 import { SubmissionService } from '../services/submissionService'
 import { UserService } from '../services/userService'
 import { WorkspaceService } from '../services/workspaceService'
-import { SubmissionMonitorService } from '../services/submissionMonitor'
+import { SubmissionMonitorService } from '../services/submissionMonitorService'
 import { ProblemsetProvider } from '../views/problemsetProvider'
 import { SubmissionProvider } from '../views/submissionProvider'
 

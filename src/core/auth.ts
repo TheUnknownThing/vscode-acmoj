@@ -217,6 +217,26 @@ export class AuthService {
     }
   }
 
+  /**
+   * Check login status, if not, prompt user to set tokens
+   * @returns True if user is logged in.
+   */
+  public async checkLoginAndPrompt(): Promise<boolean> {
+    if (!this.isLoggedIn()) {
+      const selection = await vscode.window.showWarningMessage(
+        'Please set your ACMOJ Personal Access Token first.',
+        'Set Token',
+        'Cancel',
+      )
+      if (selection === 'Set Token') {
+        await vscode.commands.executeCommand('acmoj.setToken')
+        return this.isLoggedIn()
+      }
+      return false
+    }
+    return true
+  }
+
   dispose() {
     this._onDidChangeLoginStatus.dispose()
   }
