@@ -54,8 +54,6 @@ export abstract class BasePanel {
     const webview = this.panel.webview
     const nonce = scriptNonce || getNonce() // Use provided nonce for script or generate new
 
-    const cspSource = webview.cspSource
-
     // --- Get URIs for KaTeX assets ---
     const katexDistUri = vscode.Uri.joinPath(
       this.extensionUri,

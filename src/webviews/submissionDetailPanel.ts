@@ -155,7 +155,6 @@ export class SubmissionDetailPanel extends BasePanel {
     submission: Submission,
     codeContent: string,
   ): string {
-    const statusClass = `status-${submission.status.toLowerCase().replace(/_/g, '-')}`
     const abortButtonHtml = submission.abort_url
       ? `<button id="abort-button">Abort Submission</button>`
       : ''

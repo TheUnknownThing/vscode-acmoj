@@ -1,10 +1,7 @@
 import * as vscode from 'vscode'
 import { AuthService } from '../core/auth'
-import { ApiClient } from '../core/api'
-import { CacheService } from '../services/cacheService'
 import { ProblemService } from '../services/problemService'
 import { SubmissionService } from '../services/submissionService'
-import { ProblemsetService } from '../services/problemsetService'
 import { UserService } from '../services/userService'
 import { WorkspaceService } from '../services/workspaceService'
 import { SubmissionMonitorService } from '../services/submissionMonitor'
@@ -36,11 +33,7 @@ export function registerCommands(
     problemsetProvider,
     submissionProvider,
   )
-  registerProblemCommands(
-    context,
-    authService,
-    problemService,
-  )
+  registerProblemCommands(context, authService, problemService)
   registerSubmissionCommands(
     context,
     authService,

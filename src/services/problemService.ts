@@ -1,6 +1,6 @@
 import { ApiClient } from '../core/api'
 import { CacheService } from './cacheService'
-import { ProblemBrief, Problem, Problemset } from '../types'
+import { ProblemBrief, Problem } from '../types'
 
 export class ProblemService {
   private apiClient: ApiClient

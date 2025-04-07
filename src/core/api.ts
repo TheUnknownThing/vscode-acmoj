@@ -80,13 +80,6 @@ export class ApiClient {
             error.message,
             error.code,
           )
-          let userMessage = `Network connectivity issue: ${error.message}.`
-          if (error.message.includes('TLS')) {
-            userMessage +=
-              ' Check if disabling "acmoj.rejectUnauthorized" helps (requires restart).'
-          } else {
-            userMessage += ' Check your network, proxy, or VPN settings.'
-          }
           // Don't reject here, let retry handle it first if applicable
           // return Promise.reject(new Error(userMessage));
         }

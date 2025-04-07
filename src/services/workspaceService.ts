@@ -25,14 +25,14 @@ export class WorkspaceService {
     }
 
     const languageId = mapLanguageToVscode(language)
-  
+
     const doc = await vscode.workspace.openTextDocument({
       content: code,
       language: languageId,
     })
-  
+
     await vscode.window.showTextDocument(doc)
-  
+
     vscode.window.showInformationMessage(
       `Opened code for submission #${submissionId} in ${languageId} editor.`,
     )

@@ -16,8 +16,8 @@ export function registerAuthCommands(
       const success = await authService.setToken()
       if (success) {
         // Refresh handled by onDidChangeLoginStatus listener in extension.ts
-        problemsetProvider.refresh();
-        submissionProvider.refresh();
+        problemsetProvider.refresh()
+        submissionProvider.refresh()
         vscode.window.showInformationMessage('ACMOJ Token set successfully.')
       }
     }),
@@ -25,8 +25,8 @@ export function registerAuthCommands(
     vscode.commands.registerCommand('acmoj.clearToken', async () => {
       await authService.clearToken()
       // Refresh handled by onDidChangeLoginStatus listener in extension.ts
-      problemsetProvider.refresh();
-      submissionProvider.refresh();
+      problemsetProvider.refresh()
+      submissionProvider.refresh()
       vscode.window.showInformationMessage('ACMOJ Token cleared.')
     }),
 

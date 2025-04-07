@@ -1,7 +1,6 @@
 import * as vscode from 'vscode'
 import { AuthService } from '../core/auth'
 import { ProblemService } from '../services/problemService'
-import { WorkspaceService } from '../services/workspaceService'
 import { ProblemDetailPanel } from '../webviews/problemDetailPanel'
 
 // Helper function for login check
