@@ -1,8 +1,8 @@
 import * as vscode from 'vscode'
 import { AuthService } from '../core/auth'
 import { UserService } from '../services/userService'
-import { ProblemsetProvider } from '../views/problemsetProvider' // For refresh
-import { SubmissionProvider } from '../views/submissionProvider' // For refresh
+import { ProblemsetProvider } from '../views/problemsetProvider'
+import { SubmissionProvider } from '../views/submissionProvider'
 
 export function registerAuthCommands(
   context: vscode.ExtensionContext,
@@ -13,21 +13,20 @@ export function registerAuthCommands(
 ) {
   context.subscriptions.push(
     vscode.commands.registerCommand('acmoj.setToken', async () => {
-      const success = await authService.setToken() // Use validation method
+      const success = await authService.setToken()
       if (success) {
         // Refresh handled by onDidChangeLoginStatus listener in extension.ts
-        // problemsetProvider.refresh();
-        // submissionProvider.refresh();
+        problemsetProvider.refresh();
+        submissionProvider.refresh();
         vscode.window.showInformationMessage('ACMOJ Token set successfully.')
       }
-      // Error messages handled within authService.setTokenWithValidation
     }),
 
     vscode.commands.registerCommand('acmoj.clearToken', async () => {
       await authService.clearToken()
       // Refresh handled by onDidChangeLoginStatus listener in extension.ts
-      // problemsetProvider.refresh();
-      // submissionProvider.refresh();
+      problemsetProvider.refresh();
+      submissionProvider.refresh();
       vscode.window.showInformationMessage('ACMOJ Token cleared.')
     }),
 

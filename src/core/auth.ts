@@ -13,7 +13,6 @@ export class AuthService {
   private _onDidChangeLoginStatus = new vscode.EventEmitter<boolean>()
   public readonly onDidChangeLoginStatus = this._onDidChangeLoginStatus.event
 
-  // Event for profile changes (optional but good practice)
   private _onDidChangeProfile = new vscode.EventEmitter<Profile | null>()
   public readonly onDidChangeProfile = this._onDidChangeProfile.event
 

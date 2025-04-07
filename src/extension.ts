@@ -9,13 +9,10 @@ import { UserService } from './services/userService'
 import { WorkspaceService } from './services/workspaceService'
 import { ProblemsetProvider } from './views/problemsetProvider'
 import { SubmissionProvider } from './views/submissionProvider'
-import { registerCommands } from './commands' // Will point to src/commands/index.ts
-import { SubmissionMonitorService } from './services/submissionMonitor' // Keep this service
+import { registerCommands } from './commands'
+import { SubmissionMonitorService } from './services/submissionMonitor'
 import { Profile } from './types'
 
-// Make services accessible globally within the extension if needed,
-// though dependency injection is preferred.
-// Consider creating a central 'ServiceContainer' if this gets complex.
 let authService: AuthService
 let cacheService: CacheService
 let apiClient: ApiClient
@@ -58,7 +55,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push({ dispose: () => cacheService.dispose() }) // Dispose cache
 
   // --- View Provider Registration ---
-  // Inject only the services they *need*
+  // Inject only the services they need
   problemsetProvider = new ProblemsetProvider(problemsetService, authService)
   submissionProvider = new SubmissionProvider(submissionService, authService) // Pass needed services
 
@@ -92,12 +89,10 @@ export async function activate(context: vscode.ExtensionContext) {
       submissionProvider.refresh()
     } else {
       // Clear views or show logged-out state
-      problemsetProvider.refresh() // Will likely show nothing or a login message
-      submissionProvider.refresh() // Will likely show nothing or a login message
+      problemsetProvider.refresh()
+      submissionProvider.refresh()
     }
   })
-  // Optional: Listen to profile changes if friendly_name can change without logout/login
-  // authService.onDidChangeProfile((profile) => updateStatusBar(profile));
 
   // --- Register Commands ---
   // Pass all services needed by *any* command. Command handlers will pick what they need.
@@ -105,16 +100,11 @@ export async function activate(context: vscode.ExtensionContext) {
   registerCommands(
     context,
     authService,
-    cacheService,
-    apiClient, // Keep apiClient for base URL or direct calls if necessary
     problemService,
     submissionService,
-    problemsetService,
     userService,
-    workspaceService, // Pass WorkspaceService
+    workspaceService,
     submissionMonitor,
-    // Pass providers ONLY if commands *absolutely* need direct manipulation
-    // Prefer triggering provider refresh via dedicated commands or events
     problemsetProvider,
     submissionProvider,
   )

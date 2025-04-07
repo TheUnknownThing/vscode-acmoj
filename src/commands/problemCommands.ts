@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import { AuthService } from '../core/auth'
 import { ProblemService } from '../services/problemService'
 import { WorkspaceService } from '../services/workspaceService'
-import { ProblemDetailPanel } from '../webviews/problemDetailPanel' // Use new panel class
+import { ProblemDetailPanel } from '../webviews/problemDetailPanel'
 
 // Helper function for login check
 async function checkLoginAndPrompt(authService: AuthService): Promise<boolean> {
@@ -26,7 +26,6 @@ export function registerProblemCommands(
   context: vscode.ExtensionContext,
   authService: AuthService,
   problemService: ProblemService,
-  workspaceService: WorkspaceService, // Potentially needed later
 ) {
   context.subscriptions.push(
     vscode.commands.registerCommand('acmoj.viewProblemById', async () => {

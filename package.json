@@ -176,6 +176,11 @@
           "default": 1000,
           "description": "Delay in milliseconds between API retry attempts."
         },
+        "acmoj.apiRequestTimeout": {
+          "type": "number",
+          "default": 15000,
+          "description": "Timeout in milliseconds for API requests."
+        },
         "acmoj.submissionMonitorInterval": {
           "type": "number",
           "default": 3000,

@@ -20,10 +20,9 @@ export class ApiClient {
     this.retryCount = config.get<number>('apiRetryCount', 3)
     this.retryDelay = config.get<number>('apiRetryDelay', 1000)
     const requestTimeout = config.get<number>('apiRequestTimeout', 15000)
-    const rejectUnauthorized = config.get<boolean>('rejectUnauthorized', true)
 
     const httpsAgent = new https.Agent({
-      rejectUnauthorized: rejectUnauthorized, // Use configured value
+      rejectUnauthorized: true,
       keepAlive: true,
       timeout: requestTimeout,
     })
@@ -46,8 +45,6 @@ export class ApiClient {
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`
         }
-        // Log request details (optional, for debugging)
-        // console.log(`--> ${config.method?.toUpperCase()} ${config.url}`);
         return config
       },
       (error) => {
@@ -59,16 +56,11 @@ export class ApiClient {
     // Response interceptor - Handles generic errors and 401
     this.axiosInstance.interceptors.response.use(
       (response) => {
-        // Log response details (optional)
-        // console.log(`<-- ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
         return response
       },
       async (error: AxiosError<ApiError>) => {
         const originalRequest = error.config
         const status = error.response?.status
-
-        // Log error details (optional)
-        // console.error(`<-- ${status} ${error.config?.method?.toUpperCase()} ${error.config?.url}`, error.message);
 
         // Network/Connectivity Errors
         if (
@@ -89,7 +81,7 @@ export class ApiClient {
             error.code,
           )
           let userMessage = `Network connectivity issue: ${error.message}.`
-          if (!rejectUnauthorized && error.message.includes('TLS')) {
+          if (error.message.includes('TLS')) {
             userMessage +=
               ' Check if disabling "acmoj.rejectUnauthorized" helps (requires restart).'
           } else {

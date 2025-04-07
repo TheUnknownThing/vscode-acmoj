@@ -15,20 +15,16 @@ import { SubmissionProvider } from '../views/submissionProvider'
 import { registerAuthCommands } from './authCommands'
 import { registerProblemCommands } from './problemCommands'
 import { registerSubmissionCommands } from './submissionCommands'
-import { registerFilterCommands } from './filterCommands' // For filters/pagination
+import { registerFilterCommands } from './filterCommands'
 
 export function registerCommands(
   context: vscode.ExtensionContext,
   authService: AuthService,
-  cacheService: CacheService,
-  apiClient: ApiClient,
   problemService: ProblemService,
   submissionService: SubmissionService,
-  problemsetService: ProblemsetService,
   userService: UserService,
   workspaceService: WorkspaceService,
   submissionMonitor: SubmissionMonitorService,
-  // Pass providers only if handlers absolutely need them
   problemsetProvider: ProblemsetProvider,
   submissionProvider: SubmissionProvider,
 ) {
@@ -44,7 +40,6 @@ export function registerCommands(
     context,
     authService,
     problemService,
-    workspaceService,
   )
   registerSubmissionCommands(
     context,
