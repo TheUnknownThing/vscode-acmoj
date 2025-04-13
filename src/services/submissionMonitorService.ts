@@ -16,7 +16,6 @@ export class SubmissionMonitorService {
   private maxAttempts: number = 40 // Maximum monitoring duration = interval * maxAttempts (about 2 minutes)
 
   constructor(
-    private apiClient: ApiClient,
     private cacheService: CacheService,
     private submissionService: SubmissionService,
     private submissionProvider: SubmissionProvider,

@@ -18,7 +18,6 @@ export class ProblemsetService {
     return this.cacheService.getOrFetch(
       cacheKey,
       async () => {
-        // Assuming the API returns { problemsets: Problemset[] }
         const response = await this.apiClient.get<{
           problemsets: Problemset[]
         }>('/user/problemsets')

@@ -51,7 +51,7 @@ export class SubmissionService {
       `cursor:${cursor || 'first'}`,
     ]
     const cacheKey = `submissions:list:${filterParts.join(':')}`
-    const ttlMinutes = 1 // Very short TTL for submission lists
+    const ttlMinutes = 5
 
     return this.cacheService.getOrFetch(
       cacheKey,
@@ -132,15 +132,7 @@ export class SubmissionService {
       cacheKey,
       async () => {
         try {
-          // IMPORTANT: Fetching from codeUrl might require different auth or no auth.
-          // Using a separate axios instance or fetch might be necessary if it's
-          // outside the standard API base and auth scheme.
-          // Assuming it's a public URL or accessible without bearer token for now.
           const response = await axios.get<string>(codeUrl, {
-            // If codeUrl is relative, construct absolute URL
-            baseURL: codeUrl.startsWith('http')
-              ? undefined
-              : this.apiClient.getBaseUrl(),
             timeout: 10000, // Separate timeout for code fetching
           })
           return response.data

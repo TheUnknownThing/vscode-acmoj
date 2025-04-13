@@ -115,7 +115,7 @@ export class ProblemDetailPanel extends BasePanel {
         )
         return
 
-      // Add other message handlers if needed
+      // TODO: I'll add submitFromProblemView here later
     }
   }
 
@@ -132,7 +132,6 @@ export class ProblemDetailPanel extends BasePanel {
     )
 
     let examplesHtml = ''
-    // ... (Keep your existing examplesHtml generation logic here, using escapeHtml) ...
     if (problem.examples && problem.examples.length > 0) {
       examplesHtml = problem.examples
         .map(

@@ -5,8 +5,8 @@ import { SubmissionService } from '../services/submissionService'
 import { ProblemService } from '../services/problemService'
 import { WorkspaceService } from '../services/workspaceService'
 import { SubmissionMonitorService } from '../services/submissionMonitorService'
-import { SubmissionDetailPanel } from '../webviews/submissionDetailPanel' // Use new panel class
-import { SubmissionProvider } from '../views/submissionProvider' // Needed for refresh after submit/abort
+import { SubmissionDetailPanel } from '../webviews/submissionDetailPanel'
+import { SubmissionProvider } from '../views/submissionProvider'
 
 export function registerSubmissionCommands(
   context: vscode.ExtensionContext,
@@ -165,7 +165,6 @@ export function registerSubmissionCommands(
         let availableLanguages: string[] = [
           'cpp',
           'python',
-          'c',
           'java',
           'git',
           'verilog',

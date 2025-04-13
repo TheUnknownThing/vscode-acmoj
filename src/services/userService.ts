@@ -13,7 +13,7 @@ export class UserService {
 
   async getUserProfile(): Promise<Profile> {
     const cacheKey = 'user:profile'
-    const ttlMinutes = 60 // Cache profile for an hour
+    const ttlMinutes = 120 // Cache profile for two hours
 
     return this.cacheService.getOrFetch(
       cacheKey,

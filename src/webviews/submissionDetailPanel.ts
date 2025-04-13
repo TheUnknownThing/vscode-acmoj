@@ -85,8 +85,6 @@ export class SubmissionDetailPanel extends BasePanel {
       )
       this.currentSubmissionData = submission // Cache the data
       this.panel.title = `Submission ${submission.id} - ${submission.status}`
-
-      // Update HTML with details, show code is loading
       this.panel.webview.html = this._getSubmissionHtml(submission, codeContent)
 
       // Then fetch code (can take longer)
@@ -128,19 +126,16 @@ export class SubmissionDetailPanel extends BasePanel {
 
     switch (message.command) {
       case 'abort':
-        // Trigger the command, passing the submission ID
         vscode.commands.executeCommand('acmoj.abortSubmission', submission.id)
         return
 
       case 'viewProblem':
-        // Trigger the command to show problem details
         if (message.problemId) {
           vscode.commands.executeCommand('acmoj.viewProblem', message.problemId)
         }
         return
 
       case 'openInEditor':
-        // Trigger the command to open code, passing necessary info
         vscode.commands.executeCommand('acmoj.openSubmissionCode', {
           submissionId: submission.id,
           codeUrl: submission.code_url,
@@ -225,7 +220,6 @@ export class SubmissionDetailPanel extends BasePanel {
     return this._getWebviewHtml(content, scriptNonce)
   }
 
-  // Keep your _formatJudgeDetails function here as a private method
   private _formatJudgeDetails(details: any): string {
     if (!details) {
       return ''

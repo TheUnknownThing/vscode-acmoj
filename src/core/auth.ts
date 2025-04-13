@@ -41,12 +41,10 @@ export class AuthService {
   }
 
   public isLoggedIn(): boolean {
-    // Consider a token "logged in" if it exists. Validation status can be checked separately if needed.
     return !!this._accessToken
   }
 
   public async getToken(): Promise<string | null> {
-    // No expiry check needed for PAT unless API indicates otherwise
     return this._accessToken
   }
 

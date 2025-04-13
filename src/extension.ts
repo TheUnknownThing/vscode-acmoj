@@ -35,17 +35,15 @@ export async function activate(context: vscode.ExtensionContext) {
   const cacheTtl = config.get<number>('cacheDefaultTtlMinutes', 15)
 
   // --- Service Instantiation (Order matters for dependencies) ---
-  authService = new AuthService(context) // Use constructor DI
+  authService = new AuthService(context)
   cacheService = new CacheService(cacheTtl)
   apiClient = new ApiClient(authService)
   problemService = new ProblemService(apiClient, cacheService)
   submissionService = new SubmissionService(apiClient, cacheService)
   problemsetService = new ProblemsetService(apiClient, cacheService)
   userService = new UserService(apiClient, cacheService)
-  workspaceService = new WorkspaceService() // Instantiate WorkspaceService
-  // SubmissionMonitor needs SubmissionService now
+  workspaceService = new WorkspaceService()
   submissionMonitor = new SubmissionMonitorService(
-    apiClient,
     cacheService,
     submissionService,
     submissionProvider,
@@ -55,9 +53,8 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push({ dispose: () => cacheService.dispose() }) // Dispose cache
 
   // --- View Provider Registration ---
-  // Inject only the services they need
   problemsetProvider = new ProblemsetProvider(problemsetService, authService)
-  submissionProvider = new SubmissionProvider(submissionService, authService) // Pass needed services
+  submissionProvider = new SubmissionProvider(submissionService, authService)
 
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider(
@@ -95,8 +92,6 @@ export async function activate(context: vscode.ExtensionContext) {
   })
 
   // --- Register Commands ---
-  // Pass all services needed by *any* command. Command handlers will pick what they need.
-  // Pass context for extensionUri access in panels.
   registerCommands(
     context,
     authService,
@@ -151,11 +146,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // --- Initial Activation Actions ---
   if (authService.isLoggedIn()) {
-    // Fetch profile on activation if logged in, to ensure status bar is accurate
     updateStatusBar(await authService.getProfile())
-    // Initial refresh can be triggered here or rely on view visibility change
-    // problemsetProvider.refresh();
-    // submissionProvider.refresh();
   } else {
     updateStatusBar(null) // Ensure status bar shows logged out
   }

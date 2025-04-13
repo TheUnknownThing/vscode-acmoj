@@ -3,7 +3,6 @@ import { AuthService } from '../core/auth'
 import { ProblemService } from '../services/problemService'
 import { ProblemDetailPanel } from '../webviews/problemDetailPanel'
 
-
 export function registerProblemCommands(
   context: vscode.ExtensionContext,
   authService: AuthService,

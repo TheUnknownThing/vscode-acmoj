@@ -68,11 +68,7 @@ export class WorkspaceService {
       cpp: '//',
       python: '#',
       java: '//',
-      c: '//',
       verilog: '//',
-      javascript: '//',
-      typescript: '//',
-      // Add other languages supported by your OJ
     }
     const commentPrefix = langCommentMap[languageId]
 
@@ -97,8 +93,7 @@ export class WorkspaceService {
 
     const success = await vscode.workspace.applyEdit(edit)
     if (success) {
-      // Maybe save the document after edit? Optional.
-      // await document.save();
+      await document.save()
     } else {
       vscode.window.showErrorMessage(
         'Failed to add problem ID comment to the file.',
@@ -119,7 +114,7 @@ export class WorkspaceService {
     const fileName = path.basename(filePath)
     // Regex tries to find numbers preceded by P or nothing, followed by non-digit or end
     // Examples: P123.cpp, 123_solution.py, 123.java
-    const match = fileName.match(/(?:\b|_|^)P?(\d+)(?:\b|_|\.[^.]*$)/)
+    const match = fileName.match(/(?:\b|_|^v)P?(\d+)(?:\b|_|\.[^.]*$)/)
     if (match && match[1]) {
       return parseInt(match[1], 10)
     }
@@ -193,18 +188,13 @@ export class WorkspaceService {
     // Direct mapping (common cases)
     const directMap: Record<string, string> = {
       cpp: 'cpp',
-      'c++': 'cpp',
-      c: 'c',
       java: 'java',
       python: 'python',
-      javascript: 'javascript',
-      typescript: 'typescript',
-      verilog: 'verilog', // Add mappings relevant to your OJ
+      verilog: 'verilog',
     }
 
     let potentialMatch: string | undefined = directMap[lowerId]
 
-    // Handle special cases like 'plaintext' -> 'git' if applicable
     if (lowerId === 'plaintext' && availableLangs.includes('git')) {
       potentialMatch = 'git'
     }
@@ -219,7 +209,6 @@ export class WorkspaceService {
       return lowerId
     }
 
-    // If no match found
     return undefined
   }
 }
