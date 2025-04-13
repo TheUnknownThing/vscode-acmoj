@@ -204,3 +204,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 *   Fixed the issue where the filter in the submission view causes the submission item to be indented
+
+## [0.5.0] - 2025-4-13
+
+### Refactor
+
+* Completely refactored the code to use a more modular approach, separating concerns and improving readability.
+
+* Moved all API-related code to a separate module for better organization.
+
+* Improved error handling and logging throughout the extension.

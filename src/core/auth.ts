@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
-import { ApiClient } from './api'
-import { Profile } from './types' // Import Profile type
+import { ApiClient } from '../core/api'
+import { Profile } from '../types' // Import Profile type
 
 const TOKEN_KEY = 'acmoj_personal_access_token'
 const PROFILE_KEY = 'acmoj_user_profile' // Key to store profile in globalState
@@ -13,7 +13,6 @@ export class AuthService {
   private _onDidChangeLoginStatus = new vscode.EventEmitter<boolean>()
   public readonly onDidChangeLoginStatus = this._onDidChangeLoginStatus.event
 
-  // Event for profile changes (optional but good practice)
   private _onDidChangeProfile = new vscode.EventEmitter<Profile | null>()
   public readonly onDidChangeProfile = this._onDidChangeProfile.event
 
@@ -42,12 +41,10 @@ export class AuthService {
   }
 
   public isLoggedIn(): boolean {
-    // Consider a token "logged in" if it exists. Validation status can be checked separately if needed.
     return !!this._accessToken
   }
 
   public async getToken(): Promise<string | null> {
-    // No expiry check needed for PAT unless API indicates otherwise
     return this._accessToken
   }
 
@@ -98,8 +95,9 @@ export class AuthService {
           this._profile = null // Clear old profile
 
           // Attempt validation and profile fetch
-          const tempApiClient = new ApiClient(this)
-          const profile = await tempApiClient.getUserProfile() // Fetches profile
+          const profile = await new ApiClient(this).get<Profile>(
+            '/user/profile',
+          )
 
           // If validation passes:
           this._isValidated = true
@@ -182,8 +180,7 @@ export class AuthService {
   public async validateTokenAndFetchProfile(): Promise<Profile | null> {
     if (!this._accessToken) return null
     try {
-      const apiClient = new ApiClient(this) // Use ApiClient
-      const profile = await apiClient.getUserProfile()
+      const profile = await new ApiClient(this).get<Profile>('/user/profile')
       this._isValidated = true
       this._profile = profile
       await this.context.globalState.update(PROFILE_KEY, this._profile)
@@ -216,6 +213,26 @@ export class AuthService {
           }
         })
     }
+  }
+
+  /**
+   * Check login status, if not, prompt user to set tokens
+   * @returns True if user is logged in.
+   */
+  public async checkLoginAndPrompt(): Promise<boolean> {
+    if (!this.isLoggedIn()) {
+      const selection = await vscode.window.showWarningMessage(
+        'Please set your ACMOJ Personal Access Token first.',
+        'Set Token',
+        'Cancel',
+      )
+      if (selection === 'Set Token') {
+        await vscode.commands.executeCommand('acmoj.setToken')
+        return this.isLoggedIn()
+      }
+      return false
+    }
+    return true
   }
 
   dispose() {

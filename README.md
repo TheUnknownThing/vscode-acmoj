@@ -87,10 +87,7 @@ This extension contributes the following settings (accessible via `File > Prefer
 
 *   Add support for submitting file in the problem view.
 *   Open the problem in the editor when clicking it in submission view.
-*   Add filter and search functionality in the submission view.
-*   Move the function `acmoj:submitCurrentFile` to another file.
-*   Move filter options of submission to another file, add another abstract layer.
-*   Refactor the code in `webviews.ts` to keep it concise.
+*   Add search functionality in the submission view.
 
 ## Contributing
 

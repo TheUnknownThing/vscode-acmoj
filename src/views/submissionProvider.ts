@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
-import { ApiClient } from '../api'
 import { SubmissionBrief, SubmissionStatus } from '../types'
-import { AuthService } from '../auth'
+import { AuthService } from '../core/auth'
+import { SubmissionService } from '../services/submissionService'
 
 // Union type for tree items
 export type SubmissionViewItem =
@@ -35,7 +35,7 @@ export class SubmissionProvider
   private languageFilter: string | undefined = undefined
 
   constructor(
-    private apiClient: ApiClient,
+    private submissionService: SubmissionService,
     private authService: AuthService,
   ) {
     authService.onDidChangeLoginStatus(() => this.refresh())
@@ -55,6 +55,13 @@ export class SubmissionProvider
 
   setStatusFilter(status: string | undefined): void {
     this.statusFilter = status
+    this.resetPagination()
+  }
+
+  clearFilters(): void {
+    this.statusFilter = undefined
+    this.problemIdFilter = undefined
+    this.languageFilter = undefined
     this.resetPagination()
   }
 
@@ -160,10 +167,10 @@ export class SubmissionProvider
       }
 
       // Get the current page of submissions with filters applied
-      const profile = await this.apiClient.getUserProfile()
-      const username = profile.username
+      const profile = await this.authService.getProfile()
+      const username = (profile && profile.username) || undefined
 
-      const { submissions, next } = await this.apiClient.getSubmissions(
+      const { submissions, next } = await this.submissionService.getSubmissions(
         this.currentCursor,
         username,
         this.problemIdFilter,
@@ -177,7 +184,7 @@ export class SubmissionProvider
           submission.status === 'compiling' ||
           submission.status === 'judging'
         ) {
-          this.apiClient.expireSubmissionCache(submission.id)
+          this.submissionService.clearSubmissionDetailCache(submission.id)
         }
       }
 

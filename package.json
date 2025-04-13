@@ -2,7 +2,7 @@
   "name": "vscode-acmoj",
   "displayName": "ACMOJ Helper",
   "description": "View problems, submit code, and check results for ACMOJ.",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "publisher": "TheUnknownThing",
   "contributors": [
     {
@@ -176,6 +176,11 @@
           "default": 1000,
           "description": "Delay in milliseconds between API retry attempts."
         },
+        "acmoj.apiRequestTimeout": {
+          "type": "number",
+          "default": 15000,
+          "description": "Timeout in milliseconds for API requests."
+        },
         "acmoj.submissionMonitorInterval": {
           "type": "number",
           "default": 3000,
@@ -195,8 +200,8 @@
     "watch": "tsc -watch -p ./",
     "watch:tsc": "tsc --watch",
     "watch:esbuild": "esbuild src/extension.ts --bundle --platform=node --outdir=out --external:vscode --watch",
-    "lint": "eslint src --ext ts",
-    "lint:fix": "eslint src --ext ts --fix",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.ts\" \"src/*.ts\"",
     "prepare": "husky install"
   },

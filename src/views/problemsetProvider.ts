@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
-import { ApiClient } from '../api'
 import { Problemset, ProblemBrief } from '../types'
-import { AuthService } from '../auth'
+import { AuthService } from '../core/auth'
+import { ProblemsetService } from '../services/problemsetService'
 
 type AcmojTreeItem =
   | CategoryTreeItem
@@ -23,7 +23,7 @@ export class ProblemsetProvider
   private problemsetCache: Map<number, Problemset> = new Map() // Keep cache for details
 
   constructor(
-    private apiClient: ApiClient,
+    private problemsetService: ProblemsetService,
     private authService: AuthService,
   ) {
     authService.onDidChangeLoginStatus(() => this.refresh())
@@ -54,8 +54,8 @@ export class ProblemsetProvider
       // Fetch all problemsets if not already fetched in this cycle
       if (this.allProblemsets === null) {
         try {
-          const { problemsets } = await this.apiClient.getUserProblemsets()
-          this.allProblemsets = problemsets
+          this.allProblemsets =
+            await this.problemsetService.getUserProblemsets()
         } catch (error: any) {
           vscode.window.showErrorMessage(
             `Failed to load problemsets: ${error.message}`,
@@ -84,8 +84,8 @@ export class ProblemsetProvider
           'Problemsets not loaded when expanding category, fetching again.',
         )
         try {
-          const { problemsets } = await this.apiClient.getUserProblemsets()
-          this.allProblemsets = problemsets
+          this.allProblemsets =
+            await this.problemsetService.getUserProblemsets()
         } catch (error: any) {
           return [
             new vscode.TreeItem(
@@ -161,7 +161,7 @@ export class ProblemsetProvider
           console.log(
             `Fetching details for problemset ${element.problemset.id}`,
           )
-          problemsetDetails = await this.apiClient.getProblemsetDetails(
+          problemsetDetails = await this.problemsetService.getProblemsetDetails(
             element.problemset.id,
           )
           this.problemsetCache.set(element.problemset.id, problemsetDetails)
