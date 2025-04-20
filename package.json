@@ -2,7 +2,7 @@
   "name": "vscode-acmoj",
   "displayName": "ACMOJ Helper",
   "description": "View problems, submit code, and check results for ACMOJ.",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "publisher": "TheUnknownThing",
   "contributors": [
     {
@@ -16,6 +16,10 @@
     {
       "name": "Xiang Zhuo",
       "url": "https://github.com/zxsheather"
+    },
+    {
+      "name": "Linzhang Li",
+      "url": "https://github.com/Seven-Streams"
     }
   ],
   "repository": {
@@ -231,16 +235,12 @@
     "typescript": "^5",
     "typescript-eslint": "^8.28.0"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
   "lint-staged": {
+    "**/*.{ts,js,json,md}": [
+      "prettier --write"
+    ],
     "**/*.ts": [
-      "eslint --fix",
-      "prettier --write",
-      "git add"
+      "eslint --fix"
     ]
   },
   "prettier": {
