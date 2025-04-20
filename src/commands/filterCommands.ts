@@ -109,7 +109,7 @@ export function registerFilterCommands(
         }
 
         switch (filterType) {
-          case 'status':
+          case 'status': {
             const statusOptions = [
               { label: 'All', value: undefined },
               { label: 'Accepted', value: 'accepted' },
@@ -142,12 +142,14 @@ export function registerFilterCommands(
               )
             }
             break
+          }
 
-          case 'problemId':
+          case 'problemId': {
             vscode.commands.executeCommand('acmoj.setCustomProblemIdFilter')
             break
+          }
 
-          case 'language':
+          case 'language': {
             const languageOptions = [
               { label: 'All', value: undefined },
               { label: 'C++', value: 'cpp' },
@@ -171,6 +173,7 @@ export function registerFilterCommands(
               )
             }
             break
+          }
         }
       },
     ),

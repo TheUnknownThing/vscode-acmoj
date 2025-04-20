@@ -94,12 +94,16 @@ export class SubmissionDetailPanel extends BasePanel {
             submission.id,
             submission.code_url,
           )
-        } catch (codeError: any) {
+        } catch (codeError: unknown) {
+          let message = 'Unknown error'
+          if (codeError instanceof Error) {
+            message = codeError.message
+          }
           console.error(
             `Error loading code for submission ${this.submissionId}:`,
-            codeError,
+            message,
           )
-          codeContent = `Error loading code: ${escapeHtml(codeError.message)} However, you could still try to open it in the editor.`
+          codeContent = `Error loading code: ${escapeHtml(message)} However, you could still try to open it in the editor.`
         }
       } else {
         codeContent = 'Code not available or permission denied.'
@@ -107,42 +111,53 @@ export class SubmissionDetailPanel extends BasePanel {
 
       // Update HTML again with the fetched code
       this.panel.webview.html = this._getSubmissionHtml(submission, codeContent)
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.currentSubmissionData = null // Clear cached data on error
+      let message = 'Unknown error'
+      if (error instanceof Error) {
+        message = error.message
+      }
       this.panel.title = `Error Loading Submission ${this.submissionId}`
       this.panel.webview.html = this._getErrorHtml(
-        `Failed to load submission ${this.submissionId}: ${error.message}`,
+        `Failed to load submission ${this.submissionId}: ${message}`,
       )
       vscode.window.showErrorMessage(
-        `Failed to load submission ${this.submissionId}: ${error.message}`,
+        `Failed to load submission ${this.submissionId}: ${message}`,
       )
     }
   }
 
-  protected _handleMessage(message: any): void {
+  protected _handleMessage(message: unknown): void {
     if (!this.currentSubmissionData) return // Don't process messages if data isn't loaded
 
-    const submission = this.currentSubmissionData
+    if (
+      typeof message === 'object' &&
+      message !== null &&
+      'command' in message
+    ) {
+      const msg = message as { command: string; problemId?: number }
+      const submission = this.currentSubmissionData
 
-    switch (message.command) {
-      case 'abort':
-        vscode.commands.executeCommand('acmoj.abortSubmission', submission.id)
-        return
+      switch (msg.command) {
+        case 'abort':
+          vscode.commands.executeCommand('acmoj.abortSubmission', submission.id)
+          return
 
-      case 'viewProblem':
-        if (message.problemId) {
-          vscode.commands.executeCommand('acmoj.viewProblem', message.problemId)
-        }
-        return
+        case 'viewProblem':
+          if (msg.problemId) {
+            vscode.commands.executeCommand('acmoj.viewProblem', msg.problemId)
+          }
+          return
 
-      case 'openInEditor':
-        vscode.commands.executeCommand('acmoj.openSubmissionCode', {
-          submissionId: submission.id,
-          codeUrl: submission.code_url,
-          language: submission.language,
-          problemId: submission.problem?.id,
-        })
-        return
+        case 'openInEditor':
+          vscode.commands.executeCommand('acmoj.openSubmissionCode', {
+            submissionId: submission.id,
+            codeUrl: submission.code_url,
+            language: submission.language,
+            problemId: submission.problem?.id,
+          })
+          return
+      }
     }
   }
 
@@ -220,47 +235,71 @@ export class SubmissionDetailPanel extends BasePanel {
     return this._getWebviewHtml(content, scriptNonce)
   }
 
-  private _formatJudgeDetails(details: any): string {
-    if (!details) {
+  private _formatJudgeDetails(details: unknown): string {
+    if (!details || typeof details !== 'object') {
       return ''
     }
 
-    const resultClass = `status-${details.result.toLowerCase().replace(/_/g, '-')}`
+    const d = details as {
+      result: string
+      score: number
+      resource_usage?: { time_msecs?: number; memory_bytes?: number }
+      groups?: unknown[]
+    }
+
+    const resultClass = `status-${d.result?.toLowerCase().replace(/_/g, '-')}`
 
     const summaryHtml = `
             <div class="judge-summary">
             <h3 style="margin-top: 0;">Summary</h3>
             <div class="judge-summary-grid">
-                <div><strong>Result:</strong> <span class="${resultClass}">${escapeHtml(details.result.toUpperCase())}</span></div>
-                <div><strong>Score:</strong> ${details.score}/100</div>
-                <div><strong>Total Time:</strong> ${details.resource_usage?.time_msecs || 0} ms</div>
-                <div><strong>Max Memory:</strong> ${((details.resource_usage?.memory_bytes || 0) / (1024 * 1024)).toFixed(2)} MB</div>
+                <div><strong>Result:</strong> <span class="${resultClass}">${escapeHtml(d.result?.toUpperCase() ?? '')}</span></div>
+                <div><strong>Score:</strong> ${d.score}/100</div>
+                <div><strong>Total Time:</strong> ${d.resource_usage?.time_msecs || 0} ms</div>
+                <div><strong>Max Memory:</strong> ${((d.resource_usage?.memory_bytes || 0) / (1024 * 1024)).toFixed(2)} MB</div>
             </div>
             </div>
         `
 
     let groupsHtml = ''
-    if (details.groups && details.groups.length > 0) {
-      details.groups.forEach((group: any, index: number) => {
-        const groupResult = group.result.toLowerCase()
+    if (Array.isArray(d.groups) && d.groups.length > 0) {
+      d.groups.forEach((groupRaw, index: number) => {
+        if (!groupRaw || typeof groupRaw !== 'object') return
+        const group = groupRaw as {
+          id: number
+          result: string
+          score: number
+          testpoints?: unknown[]
+        }
+        const groupResult = group.result?.toLowerCase?.() ?? ''
         const groupClass = `status-${groupResult.replace(/_/g, '-')}`
 
         let testpointsHtml = ''
-        group.testpoints?.forEach((testpoint: any) => {
-          const tpResult = testpoint.result.toLowerCase()
-          const tpClass = `status-${tpResult.replace(/_/g, '-')}`
+        if (Array.isArray(group.testpoints)) {
+          group.testpoints.forEach((testpointRaw) => {
+            if (!testpointRaw || typeof testpointRaw !== 'object') return
+            const testpoint = testpointRaw as {
+              id: number
+              result: string
+              score: number
+              resource_usage?: { time_msecs?: number; memory_bytes?: number }
+              message?: string
+            }
+            const tpResult = testpoint.result?.toLowerCase?.() ?? ''
+            const tpClass = `status-${tpResult.replace(/_/g, '-')}`
 
-          testpointsHtml += `
+            testpointsHtml += `
                 <tr>
                     <td>#${testpoint.id}</td>
                     <td><span class="${tpClass}">${escapeHtml(testpoint.result)}</span></td>
                     <td>${testpoint.score}</td>
                     <td>${testpoint.resource_usage?.time_msecs || 0} ms</td>
                     <td>${((testpoint.resource_usage?.memory_bytes || 0) / (1024 * 1024)).toFixed(2)} MB</td>
-                    <td>${escapeHtml(testpoint.message) || '-'}</td>
+                    <td>${escapeHtml(testpoint.message ?? '') || '-'}</td>
                 </tr>
                 `
-        })
+          })
+        }
 
         groupsHtml += `
                 <details class="judge-group" ${index === 0 ? 'open' : ''}>

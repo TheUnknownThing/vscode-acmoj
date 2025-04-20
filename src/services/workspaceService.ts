@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import * as path from 'path'
 import { exec } from 'child_process'
 import { promisify } from 'util'
-import { mapLanguageToVscode, getFileExtension } from '../core/utils'
+import { mapLanguageToVscode } from '../core/utils'
 
 const execAsync = promisify(exec)
 
@@ -157,14 +157,34 @@ export class WorkspaceService {
         if (match && match[1]) fetchUrls.add(match[1])
       }
       return Array.from(fetchUrls)
-    } catch (error: any) {
+    } catch (error: unknown) {
+      let stderr = ''
+      let message = ''
+      let code: unknown = undefined
+      if (typeof error === 'object' && error !== null) {
+        if (
+          'stderr' in error &&
+          typeof (error as { stderr?: unknown }).stderr === 'string'
+        ) {
+          stderr = (error as { stderr?: string }).stderr ?? ''
+        }
+        if (
+          'message' in error &&
+          typeof (error as { message?: unknown }).message === 'string'
+        ) {
+          message = (error as { message?: string }).message ?? ''
+        }
+        if ('code' in error) {
+          code = (error as { code?: unknown }).code
+        }
+      }
       if (
-        error.stderr?.toLowerCase().includes('not a git repository') ||
-        error.message?.toLowerCase().includes('not a git repository')
+        stderr.toLowerCase().includes('not a git repository') ||
+        message.toLowerCase().includes('not a git repository')
       ) {
         console.log(`Directory "${repoPath}" is not a Git repository.`)
         return []
-      } else if (error.code === 'ENOENT') {
+      } else if (code === 'ENOENT') {
         vscode.window.showErrorMessage(
           `'git' command not found. Make sure Git is installed and in your system's PATH.`,
         )
@@ -172,7 +192,7 @@ export class WorkspaceService {
       } else {
         console.error(`Error executing 'git remote -v' in ${repoPath}:`, error)
         vscode.window.showErrorMessage(
-          `Failed to list Git remotes: ${error.stderr || error.message}`,
+          `Failed to list Git remotes: ${stderr || message}`,
         )
         return [] // Or throw?
       }

@@ -86,7 +86,7 @@ export class AuthService {
         title: 'ACMOJ: Saving and validating token...',
         cancellable: false,
       },
-      async (progress) => {
+      async () => {
         try {
           // Store the token first
           await this.context.secrets.store(TOKEN_KEY, token)
@@ -111,9 +111,13 @@ export class AuthService {
             `ACMOJ Token set for ${profile.friendly_name} (${profile.username})!`,
           )
           success = true // Mark as successful
-        } catch (error: any) {
+        } catch (error: unknown) {
+          let message = 'Unknown error'
+          if (error instanceof Error) {
+            message = error.message
+          }
           vscode.window.showErrorMessage(
-            `Failed to set or validate token: ${error.message}. Please check the token.`,
+            `Failed to set or validate token: ${message}. Please check the token.`,
           )
           await this.clearTokenInternal() // Clear the invalid token and profile
           // Error will be caught by the outer catch block

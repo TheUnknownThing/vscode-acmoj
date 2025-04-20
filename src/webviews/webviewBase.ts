@@ -38,7 +38,7 @@ export abstract class BasePanel {
     this.panel.reveal(column)
   }
 
-  protected abstract _handleMessage(message: any): void
+  protected abstract _handleMessage(message: unknown): void
   protected abstract _update(): Promise<void> // Make update async
 
   protected _getLoadingHtml(): string {

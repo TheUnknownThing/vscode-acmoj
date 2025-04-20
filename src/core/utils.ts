@@ -102,9 +102,11 @@ export async function openCodeInEditor(
     vscode.window.showInformationMessage(
       `Opened code for "${title}" in a new editor.`,
     )
-  } catch (error: any) {
-    vscode.window.showErrorMessage(
-      `Failed to open code in editor: ${error.message}`,
-    )
+  } catch (error: unknown) {
+    let message = 'Unknown error'
+    if (error instanceof Error) {
+      message = error.message
+    }
+    vscode.window.showErrorMessage(`Failed to open code in editor: ${message}`)
   }
 }

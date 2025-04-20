@@ -4,11 +4,11 @@ import { Profile } from '../types'
 
 export class UserService {
   private apiClient: ApiClient
-  private cacheService: CacheService
+  private cacheService: CacheService<Profile>
 
-  constructor(apiClient: ApiClient, cacheService: CacheService) {
+  constructor(apiClient: ApiClient) {
     this.apiClient = apiClient
-    this.cacheService = cacheService
+    this.cacheService = new CacheService<Profile>()
   }
 
   async getUserProfile(): Promise<Profile> {

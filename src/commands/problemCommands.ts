@@ -44,9 +44,13 @@ export function registerProblemCommands(
             problemId,
             problemService,
           )
-        } catch (error: any) {
+        } catch (error: unknown) {
+          let message = 'Unknown error'
+          if (error instanceof Error) {
+            message = error.message
+          }
           vscode.window.showErrorMessage(
-            `Failed to show problem ${problemId}: ${error.message}`,
+            `Failed to show problem ${problemId}: ${message}`,
           )
         }
       },
@@ -66,9 +70,13 @@ export function registerProblemCommands(
           vscode.window.showInformationMessage(
             'Example input sent to active/new terminal.',
           )
-        } catch (error: any) {
+        } catch (error: unknown) {
+          let message = 'Unknown error'
+          if (error instanceof Error) {
+            message = error.message
+          }
           vscode.window.showErrorMessage(
-            `Failed to copy to terminal: ${error.message}`,
+            `Failed to copy to terminal: ${message}`,
           )
         }
       },

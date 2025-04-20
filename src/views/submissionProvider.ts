@@ -223,15 +223,14 @@ export class SubmissionProvider
       }
 
       return result
-    } catch (error: any) {
-      vscode.window.showErrorMessage(
-        `Failed to load submissions: ${error.message}`,
-      )
+    } catch (error: unknown) {
+      let message = 'Unknown error'
+      if (error instanceof Error) {
+        message = error.message
+      }
+      vscode.window.showErrorMessage(`Failed to load submissions: ${message}`)
       return [
-        new SubmissionTreeItem(
-          {} as SubmissionBrief,
-          `Error: ${error.message}`,
-        ),
+        new SubmissionTreeItem({} as SubmissionBrief, `Error: ${message}`),
       ]
     }
   }
@@ -392,7 +391,7 @@ export class FilterOptionTreeItem extends vscode.TreeItem {
   constructor(
     label: string,
     public readonly filterType: string,
-    public readonly value: any,
+    public readonly value: unknown,
     isSelected: boolean,
   ) {
     super(label, vscode.TreeItemCollapsibleState.None)
@@ -404,10 +403,8 @@ export class FilterOptionTreeItem extends vscode.TreeItem {
         arguments: [],
       }
     } else {
-      let commandName = `acmoj.set${filterType.charAt(0).toUpperCase() + filterType.slice(1)}Filter`
-
       this.command = {
-        command: commandName,
+        command: `acmoj.set${filterType.charAt(0).toUpperCase() + filterType.slice(1)}Filter`,
         title: `Set ${filterType} Filter`,
         arguments: [this.value],
       }
@@ -482,7 +479,6 @@ export class FilterItemTreeItem extends vscode.TreeItem {
         arguments: [],
       }
     } else {
-      let commandName = `acmoj.manage${filterType.charAt(0).toUpperCase() + filterType.slice(1)}Filter`
       this.command = {
         command: 'acmoj.manageSubmissionFilters',
         title: `Manage Filters`,

@@ -1,5 +1,4 @@
 import * as vscode from 'vscode'
-import { ApiClient } from '../core/api'
 import { SubmissionProvider } from '../views/submissionProvider'
 import { SubmissionService } from './submissionService'
 import { Submission } from '../types'
@@ -11,7 +10,7 @@ import { CacheService } from './cacheService'
  */
 export class SubmissionMonitorService {
   private monitoredSubmissions: Map<number, string> = new Map()
-  private timer: NodeJS.Timeout | undefined
+  private timer: ReturnType<typeof setInterval> | undefined
   private monitorInterval: number = 3000 // Default check interval: 3 seconds
   private maxAttempts: number = 40 // Maximum monitoring duration = interval * maxAttempts (about 2 minutes)
 

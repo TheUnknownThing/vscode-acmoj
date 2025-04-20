@@ -2,13 +2,17 @@ import { ApiClient } from '../core/api'
 import { CacheService } from './cacheService'
 import { ProblemBrief, Problem } from '../types'
 
+type ProblemListCache = { problems: ProblemBrief[]; next: string | null }
+
 export class ProblemService {
   private apiClient: ApiClient
-  private cacheService: CacheService
+  private problemListCache: CacheService<ProblemListCache>
+  private problemDetailCache: CacheService<Problem>
 
-  constructor(apiClient: ApiClient, cacheService: CacheService) {
+  constructor(apiClient: ApiClient) {
     this.apiClient = apiClient
-    this.cacheService = cacheService
+    this.problemListCache = new CacheService<ProblemListCache>()
+    this.problemDetailCache = new CacheService<Problem>()
   }
 
   async getProblems(
@@ -19,19 +23,19 @@ export class ProblemService {
     const cacheKey = `problems:list:${problemsetId || 'all'}:${keyword || ''}:${cursor || 'first'}`
     const ttlMinutes = 5 // Cache problem list for 5 minutes
 
-    return this.cacheService.getOrFetch(
+    return this.problemListCache.getOrFetch(
       cacheKey,
       async () => {
-        const params: Record<string, any> = {}
+        const params: Record<string, unknown> = {}
         if (cursor) params.cursor = cursor
         if (keyword) params.keyword = keyword
         if (problemsetId) params.problemset_id = problemsetId
 
         // Use apiClient.get which handles retries etc.
-        const response = await this.apiClient.get<{
-          problems: ProblemBrief[]
-          next: string | null
-        }>('/problem/', { params })
+        const response = await this.apiClient.get<ProblemListCache>(
+          '/problem/',
+          { params },
+        )
         return response
       },
       ttlMinutes,
@@ -42,7 +46,7 @@ export class ProblemService {
     const cacheKey = `problem:detail:${problemId}`
     const ttlMinutes = 30 // Problem details change rarely
 
-    return this.cacheService.getOrFetch(
+    return this.problemDetailCache.getOrFetch(
       cacheKey,
       async () => {
         const response = await this.apiClient.get<Problem>(
@@ -57,10 +61,10 @@ export class ProblemService {
   // Clear relevant caches if needed (e.g., if problems could be updated externally)
   clearProblemCache(problemId?: number): void {
     if (problemId) {
-      this.cacheService.delete(`problem:detail:${problemId}`)
+      this.problemDetailCache.delete(`problem:detail:${problemId}`)
     }
     // Invalidate list caches - more complex, might need prefix deletion
-    this.cacheService.deleteWithPrefix('problems:list:')
+    this.problemListCache.deleteWithPrefix('problems:list:')
     console.log(
       `Problem cache cleared (Problem ID: ${problemId || 'All Lists'})`,
     )

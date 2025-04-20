@@ -84,38 +84,48 @@ export class ProblemDetailPanel extends BasePanel {
       )
       this.panel.title = `Problem ${problem.id}: ${problem.title}`
       this.panel.webview.html = this._getProblemHtml(problem)
-    } catch (error: any) {
+    } catch (error: unknown) {
+      let message = 'Unknown error'
+      if (error instanceof Error) {
+        message = error.message
+      }
       this.panel.title = `Error Loading Problem ${this.problemId}`
       this.panel.webview.html = this._getErrorHtml(
-        `Failed to load problem ${this.problemId}: ${error.message}`,
+        `Failed to load problem ${this.problemId}: ${message}`,
       )
       vscode.window.showErrorMessage(
-        `Failed to load problem ${this.problemId}: ${error.message}`,
+        `Failed to load problem ${this.problemId}: ${message}`,
       )
     }
   }
 
-  protected _handleMessage(message: any): void {
-    switch (message.command) {
-      case 'copyToTerminal':
-        // Use a dedicated command for better testability and separation
-        vscode.commands.executeCommand('acmoj.copyToTerminal', message.content)
-        return
+  protected _handleMessage(message: unknown): void {
+    if (
+      typeof message === 'object' &&
+      message !== null &&
+      'command' in message
+    ) {
+      const msg = message as { command: string; content?: string }
+      switch (msg.command) {
+        case 'copyToTerminal':
+          vscode.commands.executeCommand('acmoj.copyToTerminal', msg.content)
+          return
 
-      case 'copyToClipboard':
-        vscode.env.clipboard.writeText(message.content).then(
-          () =>
-            vscode.window.showInformationMessage(
-              'Example input copied to clipboard.',
-            ),
-          (err) =>
-            vscode.window.showErrorMessage(
-              `Failed to copy to clipboard: ${err.message}`,
-            ),
-        )
-        return
+        case 'copyToClipboard':
+          vscode.env.clipboard.writeText(msg.content ?? '').then(
+            () =>
+              vscode.window.showInformationMessage(
+                'Example input copied to clipboard.',
+              ),
+            (err) =>
+              vscode.window.showErrorMessage(
+                `Failed to copy to clipboard: ${err instanceof Error ? err.message : String(err)}`,
+              ),
+          )
+          return
 
-      // TODO: I'll add submitFromProblemView here later
+        // TODO: I'll add submitFromProblemView here later
+      }
     }
   }
 

@@ -49,10 +49,12 @@ export function registerAuthCommands(
             'Could not retrieve profile information.',
           )
         }
-      } catch (error: any) {
-        vscode.window.showErrorMessage(
-          `Failed to fetch profile: ${error.message}`,
-        )
+      } catch (error: unknown) {
+        let message = 'Unknown error'
+        if (error instanceof Error) {
+          message = error.message
+        }
+        vscode.window.showErrorMessage(`Failed to fetch profile: ${message}`)
       }
     }),
   )

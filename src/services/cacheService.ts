@@ -6,8 +6,8 @@ interface CacheEntry<T> {
   staleUntil?: number // Allow data to be used as a fallback after expiration
 }
 
-export class CacheService {
-  private cache: Map<string, CacheEntry<any>> = new Map()
+export class CacheService<T = unknown> {
+  private cache: Map<string, CacheEntry<T>> = new Map()
   private defaultTTL: number
   private stalePeriod: number // Stale period after expiration (milliseconds)
 
@@ -22,7 +22,7 @@ export class CacheService {
   /**
    * Get a cache item by key
    */
-  get<T>(key: string): T | undefined {
+  get(key: string): T | undefined {
     const entry = this.cache.get(key)
     if (!entry) return undefined
 
@@ -35,13 +35,13 @@ export class CacheService {
       return undefined
     }
 
-    return entry.data as T
+    return entry.data
   }
 
   /**
    * Store an item in the cache
    */
-  set<T>(key: string, data: T, ttlMinutes?: number): void {
+  set(key: string, data: T, ttlMinutes?: number): void {
     const ttl = ttlMinutes ? ttlMinutes * 60 * 1000 : this.defaultTTL
     const expires = Date.now() + ttl
     this.cache.set(key, {
@@ -89,13 +89,13 @@ export class CacheService {
   /**
    * Get from cache or fetch from API
    */
-  async getOrFetch<T>(
+  async getOrFetch(
     key: string,
     fetchFn: () => Promise<T>,
     ttlMinutes?: number,
   ): Promise<T> {
     // First try to get from cache
-    const cached = this.get<T>(key)
+    const cached = this.get(key)
     if (cached !== undefined) {
       return cached
     }
@@ -107,7 +107,7 @@ export class CacheService {
       return data
     } catch (error) {
       // Network error but expired data exists, try using stale data
-      const staleEntry = this.getStaleEntry<T>(key)
+      const staleEntry = this.getStaleEntry(key)
       if (staleEntry) {
         vscode.window.showInformationMessage(
           'Using cached data due to unstable network connection.',
@@ -121,14 +121,14 @@ export class CacheService {
   /**
    * Get an entry that is expired but still within stale period
    */
-  private getStaleEntry<T>(key: string): T | undefined {
+  private getStaleEntry(key: string): T | undefined {
     const entry = this.cache.get(key)
     if (!entry) return undefined
 
     const now = Date.now()
     // Expired but within stale period
     if (now > entry.expires && entry.staleUntil && now <= entry.staleUntil) {
-      return entry.data as T
+      return entry.data
     }
 
     return undefined

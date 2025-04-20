@@ -38,10 +38,10 @@ export async function activate(context: vscode.ExtensionContext) {
   authService = new AuthService(context)
   cacheService = new CacheService(cacheTtl)
   apiClient = new ApiClient(authService)
-  problemService = new ProblemService(apiClient, cacheService)
-  submissionService = new SubmissionService(apiClient, cacheService)
-  problemsetService = new ProblemsetService(apiClient, cacheService)
-  userService = new UserService(apiClient, cacheService)
+  problemService = new ProblemService(apiClient)
+  submissionService = new SubmissionService(apiClient)
+  problemsetService = new ProblemsetService(apiClient)
+  userService = new UserService(apiClient)
   workspaceService = new WorkspaceService()
   submissionMonitor = new SubmissionMonitorService(
     cacheService,

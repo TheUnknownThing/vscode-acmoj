@@ -105,7 +105,10 @@ export class ApiClient {
         // We don't reject here directly; let the retry logic handle it.
         // The final error thrown by requestWithRetry will use this message.
         // Create a new error object to preserve the status code if available
-        const customError = new Error(apiErrorMessage) as any
+        const customError = new Error(apiErrorMessage) as Error & {
+          status?: number
+          originalError?: unknown
+        }
         customError.status = status
         customError.originalError = error
         return Promise.reject(customError)
@@ -115,7 +118,7 @@ export class ApiClient {
 
   // Centralized request method with retry logic
   public async request<T>(config: AxiosRequestConfig): Promise<T> {
-    let lastError: any = null // Use 'any' to capture custom error properties
+    let lastError: unknown = null // Use 'unknown' to capture custom error properties
     let attempt = 0
 
     while (attempt <= this.retryCount) {
@@ -123,9 +126,21 @@ export class ApiClient {
       try {
         const response = await this.axiosInstance.request<T>(config)
         return response.data
-      } catch (error: any) {
+      } catch (error: unknown) {
         lastError = error
-        const status = error.status || error.originalError?.response?.status // Get status from our custom error or original AxiosError
+        // Try to extract status and originalError if possible
+        const status =
+          (typeof error === 'object' && error !== null && 'status' in error
+            ? (error as { status?: number }).status
+            : undefined) ||
+          (typeof error === 'object' &&
+          error !== null &&
+          'originalError' in error &&
+          (error as { originalError?: { response?: { status?: number } } })
+            .originalError?.response?.status
+            ? (error as { originalError?: { response?: { status?: number } } })
+                .originalError?.response?.status
+            : undefined)
 
         // Conditions to NOT retry:
         // 1. Client-side errors (4xx) except for potential transient ones like 408 (Timeout) or 429 (Too Many Requests)
@@ -146,17 +161,34 @@ export class ApiClient {
         attempt++
         if (attempt <= this.retryCount) {
           const delay = this.retryDelay * Math.pow(2, attempt - 1) // Exponential backoff
+          const message =
+            typeof error === 'object' && error !== null && 'message' in error
+              ? (error as { message?: string }).message
+              : String(error)
           console.warn(
-            `Request failed (Attempt ${attempt}/${this.retryCount}): ${error.message}. Retrying in ${delay}ms... [${config.method?.toUpperCase()} ${config.url}]`,
+            `Request failed (Attempt ${attempt}/${this.retryCount}): ${message}. Retrying in ${delay}ms... [${config.method?.toUpperCase()} ${config.url}]`,
           )
           await new Promise((resolve) => setTimeout(resolve, delay))
         }
       }
     }
 
+    const message =
+      typeof lastError === 'object' &&
+      lastError !== null &&
+      'message' in lastError
+        ? (lastError as { message?: string }).message
+        : String(lastError)
+    const originalError =
+      typeof lastError === 'object' &&
+      lastError !== null &&
+      'originalError' in lastError
+        ? (lastError as { originalError?: unknown }).originalError
+        : lastError
+
     console.error(
-      `Request failed after ${attempt} attempts: ${lastError.message} [${config.method?.toUpperCase()} ${config.url}]`,
-      lastError.originalError || lastError,
+      `Request failed after ${attempt} attempts: ${message} [${config.method?.toUpperCase()} ${config.url}]`,
+      originalError,
     )
     // Throw the last captured error
     throw lastError
@@ -169,7 +201,7 @@ export class ApiClient {
 
   public post<T>(
     url: string,
-    data?: any,
+    data?: unknown,
     config?: AxiosRequestConfig,
   ): Promise<T> {
     return this.request<T>({ ...config, method: 'POST', url, data })
@@ -177,7 +209,7 @@ export class ApiClient {
 
   public put<T>(
     url: string,
-    data?: any,
+    data?: unknown,
     config?: AxiosRequestConfig,
   ): Promise<T> {
     return this.request<T>({ ...config, method: 'PUT', url, data })

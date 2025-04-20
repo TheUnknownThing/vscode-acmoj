@@ -36,9 +36,13 @@ export function registerSubmissionCommands(
             submissionId,
             submissionService,
           )
-        } catch (error: any) {
+        } catch (error: unknown) {
+          let message = 'Unknown error'
+          if (error instanceof Error) {
+            message = error.message
+          }
           vscode.window.showErrorMessage(
-            `Failed to show submission ${submissionId}: ${error.message}`,
+            `Failed to show submission ${submissionId}: ${message}`,
           )
         }
       },
@@ -74,9 +78,13 @@ export function registerSubmissionCommands(
                 `Submission #${submissionId} aborted.`,
               )
               submissionProvider.refresh()
-            } catch (error: any) {
+            } catch (error: unknown) {
+              let message = 'Unknown error'
+              if (error instanceof Error) {
+                message = error.message
+              }
               vscode.window.showErrorMessage(
-                `Failed to abort submission #${submissionId}: ${error.message}`,
+                `Failed to abort submission #${submissionId}: ${message}`,
               )
             }
           },
@@ -111,9 +119,13 @@ export function registerSubmissionCommands(
             args.language,
             args.submissionId,
           )
-        } catch (error: any) {
+        } catch (error: unknown) {
+          let message = 'Unknown error'
+          if (error instanceof Error) {
+            message = error.message
+          }
           vscode.window.showErrorMessage(
-            `Failed to open submission code: ${error.message}`,
+            `Failed to open submission code: ${message}`,
           )
         }
       },
@@ -178,9 +190,13 @@ export function registerSubmissionCommands(
           ) {
             availableLanguages = problemDetails.languages_accepted
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
+          let message = 'Unknown error'
+          if (error instanceof Error) {
+            message = error.message
+          }
           vscode.window.showWarningMessage(
-            `Could not fetch accepted languages for P${problemId}. Using defaults. Error: ${error.message}`,
+            `Could not fetch accepted languages for P${problemId}. Using defaults. Error: ${message}`,
           )
         }
 
@@ -281,9 +297,13 @@ export function registerSubmissionCommands(
               )
               submissionProvider.refresh() // Refresh submission list
               submissionMonitor.addSubmission(result.id)
-            } catch (error: any) {
+            } catch (error: unknown) {
+              let message = 'Unknown error'
+              if (error instanceof Error) {
+                message = error.message
+              }
               vscode.window.showErrorMessage(
-                `Submission failed for P${problemId}: ${error.message}`,
+                `Submission failed for P${problemId}: ${message}`,
               )
             }
           },

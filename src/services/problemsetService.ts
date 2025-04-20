@@ -4,18 +4,20 @@ import { Problemset } from '../types'
 
 export class ProblemsetService {
   private apiClient: ApiClient
-  private cacheService: CacheService
+  private problemsetsCache: CacheService<Problemset[]>
+  private problemsetDetailsCache: CacheService<Problemset> // New cache for single problemset details
 
-  constructor(apiClient: ApiClient, cacheService: CacheService) {
+  constructor(apiClient: ApiClient) {
     this.apiClient = apiClient
-    this.cacheService = cacheService
+    this.problemsetsCache = new CacheService<Problemset[]>()
+    this.problemsetDetailsCache = new CacheService<Problemset>() // Initialize the new cache
   }
 
   async getUserProblemsets(): Promise<Problemset[]> {
     const cacheKey = `user:problemsets:list`
     const ttlMinutes = 15
 
-    return this.cacheService.getOrFetch(
+    return this.problemsetsCache.getOrFetch(
       cacheKey,
       async () => {
         const response = await this.apiClient.get<{
@@ -31,7 +33,8 @@ export class ProblemsetService {
     const cacheKey = `problemset:detail:${problemsetId}`
     const ttlMinutes = 20
 
-    return this.cacheService.getOrFetch(
+    return this.problemsetDetailsCache.getOrFetch(
+      // Use the details cache instead
       cacheKey,
       async () => {
         const response = await this.apiClient.get<Problemset>(
@@ -45,9 +48,9 @@ export class ProblemsetService {
 
   clearProblemsetCache(problemsetId?: number): void {
     if (problemsetId) {
-      this.cacheService.delete(`problemset:detail:${problemsetId}`)
+      this.problemsetDetailsCache.delete(`problemset:detail:${problemsetId}`) // Updated to use details cache
     }
-    this.cacheService.delete(`user:problemsets:list`)
+    this.problemsetsCache.delete(`user:problemsets:list`) // Use list cache
     console.log(
       `Problemset cache cleared (Problemset ID: ${problemsetId || 'User List'})`,
     )

@@ -4,13 +4,22 @@ import { ApiClient } from '../core/api'
 import { CacheService } from './cacheService'
 import { SubmissionBrief, Submission } from '../types'
 
+type SubmissionListCache = {
+  submissions: SubmissionBrief[]
+  next: string | null
+}
+
 export class SubmissionService {
   private apiClient: ApiClient
-  private cacheService: CacheService
+  private submissionListCache: CacheService<SubmissionListCache>
+  private submissionDetailCache: CacheService<Submission>
+  private submissionCodeCache: CacheService<string>
 
-  constructor(apiClient: ApiClient, cacheService: CacheService) {
+  constructor(apiClient: ApiClient) {
     this.apiClient = apiClient
-    this.cacheService = cacheService
+    this.submissionListCache = new CacheService<SubmissionListCache>()
+    this.submissionDetailCache = new CacheService<Submission>()
+    this.submissionCodeCache = new CacheService<string>()
   }
 
   async submitCode(
@@ -53,20 +62,20 @@ export class SubmissionService {
     const cacheKey = `submissions:list:${filterParts.join(':')}`
     const ttlMinutes = 5
 
-    return this.cacheService.getOrFetch(
+    return this.submissionListCache.getOrFetch(
       cacheKey,
       async () => {
-        const params: Record<string, any> = {}
+        const params: Record<string, unknown> = {}
         if (cursor) params.cursor = cursor
         if (username) params.username = username
         if (problemId) params.problem_id = problemId
         if (status) params.status = status
         if (lang) params.lang = lang
 
-        const response = await this.apiClient.get<{
-          submissions: SubmissionBrief[]
-          next: string | null
-        }>('/submission/', { params })
+        const response = await this.apiClient.get<SubmissionListCache>(
+          '/submission/',
+          { params },
+        )
         return response
       },
       ttlMinutes,
@@ -78,7 +87,7 @@ export class SubmissionService {
     // Check cache first, but fetch function will always call API
     // unless the submission is already terminal (Accepted, WA, TLE etc.)
 
-    const cached = this.cacheService.get<Submission>(cacheKey)
+    const cached = this.submissionDetailCache.get(cacheKey)
     if (cached) {
       // Check if cached submission is terminal
       if (this.isTerminalStatus(cached.status)) {
@@ -95,7 +104,7 @@ export class SubmissionService {
 
     // Cache based on status: longer for terminal, shorter for pending/judging
     const ttlMinutes = this.isTerminalStatus(submission.status) ? 15 : 1 // 15 min for terminal, 1 min otherwise
-    this.cacheService.set(cacheKey, submission, ttlMinutes)
+    this.submissionDetailCache.set(cacheKey, submission, ttlMinutes)
 
     return submission
   }
@@ -128,7 +137,7 @@ export class SubmissionService {
     const cacheKey = `submission:code:${submissionId}` // Use submission ID for cache key
     const ttlMinutes = 60 // Code content is immutable
 
-    return this.cacheService.getOrFetch(
+    return this.submissionCodeCache.getOrFetch(
       cacheKey,
       async () => {
         try {
@@ -136,10 +145,14 @@ export class SubmissionService {
             timeout: 10000, // Separate timeout for code fetching
           })
           return response.data
-        } catch (error: any) {
+        } catch (error: unknown) {
+          let message = 'Unknown error'
+          if (error instanceof Error) {
+            message = error.message
+          }
           console.error(
             `Failed to fetch code from ${codeUrl} for submission ${submissionId}:`,
-            error.message,
+            message,
           )
           // Provide a more specific error message
           if (axios.isAxiosError(error) && error.response?.status === 403) {
@@ -163,8 +176,8 @@ export class SubmissionService {
 
     // Clear relevant caches
     this.clearSubmissionListCaches()
-    this.cacheService.delete(`submission:detail:${submissionId}`)
-    this.cacheService.delete(`submission:code:${submissionId}`) // Also clear code cache
+    this.submissionDetailCache.delete(`submission:detail:${submissionId}`)
+    this.submissionCodeCache.delete(`submission:code:${submissionId}`) // Also clear code cache
     console.log(`Submission ${submissionId} aborted and caches cleared.`)
   }
 
@@ -172,22 +185,22 @@ export class SubmissionService {
 
   /** Clears all submission list caches */
   clearSubmissionListCaches(): void {
-    this.cacheService.deleteWithPrefix('submissions:list:')
+    this.submissionListCache.deleteWithPrefix('submissions:list:')
     // console.log('Submission list caches cleared.');
   }
 
   /** Clears cache for a specific submission */
   clearSubmissionDetailCache(submissionId: number): void {
-    this.cacheService.delete(`submission:detail:${submissionId}`)
-    this.cacheService.delete(`submission:code:${submissionId}`)
+    this.submissionDetailCache.delete(`submission:detail:${submissionId}`)
+    this.submissionCodeCache.delete(`submission:code:${submissionId}`)
     // console.log(`Cache cleared for submission ${submissionId}.`);
   }
 
   /** Clears all submission-related caches */
   clearAllSubmissionCaches(): void {
     this.clearSubmissionListCaches()
-    this.cacheService.deleteWithPrefix('submission:detail:')
-    this.cacheService.deleteWithPrefix('submission:code:')
+    this.submissionDetailCache.deleteWithPrefix('submission:detail:')
+    this.submissionCodeCache.deleteWithPrefix('submission:code:')
     console.log('All submission caches cleared.')
   }
 }

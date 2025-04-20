@@ -63,7 +63,7 @@ export interface Submission {
   language: string
   score: number | null
   message: string | null
-  details: any | null
+  details: unknown | null
   time_msecs: number | null
   memory_bytes: number | null
   status: SubmissionStatus

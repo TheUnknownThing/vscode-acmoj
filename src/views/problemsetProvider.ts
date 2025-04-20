@@ -56,14 +56,18 @@ export class ProblemsetProvider
         try {
           this.allProblemsets =
             await this.problemsetService.getUserProblemsets()
-        } catch (error: any) {
+        } catch (error: unknown) {
+          let message = 'Unknown error'
+          if (error instanceof Error) {
+            message = error.message
+          }
           vscode.window.showErrorMessage(
-            `Failed to load problemsets: ${error.message}`,
+            `Failed to load problemsets: ${message}`,
           )
           this.allProblemsets = [] // Avoid retrying on error within the same cycle
           return [
             new vscode.TreeItem(
-              `Error loading problemsets: ${error.message}`,
+              `Error loading problemsets: ${message}`,
               vscode.TreeItemCollapsibleState.None,
             ),
           ]
@@ -86,10 +90,14 @@ export class ProblemsetProvider
         try {
           this.allProblemsets =
             await this.problemsetService.getUserProblemsets()
-        } catch (error: any) {
+        } catch (error: unknown) {
+          let message = 'Unknown error'
+          if (error instanceof Error) {
+            message = error.message
+          }
           return [
             new vscode.TreeItem(
-              `Error loading problemsets: ${error.message}`,
+              `Error loading problemsets: ${message}`,
               vscode.TreeItemCollapsibleState.None,
             ),
           ]
@@ -227,13 +235,17 @@ export class ProblemsetProvider
             ),
           ]
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
+        let message = 'Unknown error'
+        if (error instanceof Error) {
+          message = error.message
+        }
         vscode.window.showErrorMessage(
-          `Failed to load problems for problemset ${element.problemset.id}: ${error.message}`,
+          `Failed to load problems for problemset ${element.problemset.id}: ${message}`,
         )
         return [
           new vscode.TreeItem(
-            `Error: ${error.message}`,
+            `Error: ${message}`,
             vscode.TreeItemCollapsibleState.None,
           ),
         ]
@@ -254,14 +266,14 @@ export class ProblemsetProvider
     const cleanText = text
       .replace(/\*\*(.+?)\*\*/g, '$1') // bold
       .replace(/\*(.+?)\*/g, '$1') // italic
-      .replace(/\_\_(.+?)\_\_/g, '$1') // bold
-      .replace(/\_(.+?)\_/g, '$1') // italic
+      .replace(/__(.+?)__/g, '$1') // bold
+      .replace(/_(.+?)_/g, '$1') // italic
       .replace(/\[(.+?)\]\(.+?\)/g, '$1') // links
-      .replace(/\`\`\`[\s\S]*?\`\`\`/g, '') // code blocks
-      .replace(/\`(.+?)\`/g, '$1') // inline code
-      .replace(/\#{1,6}\s+(.+)/g, '$1') // headers
+      .replace(/```[\s\S]*?```/g, '') // code blocks
+      .replace(/`(.+?)`/g, '$1') // inline code
+      .replace(/#{1,6}\s+(.+)/g, '$1') // headers
       .replace(/^\s*>\s*(.*)$/gm, '$1') // blockquotes
-      .replace(/^\s*[\*\-\+]\s+/gm, '') // unordered lists
+      .replace(/^\s*[*\-+]\s+/gm, '') // unordered lists
       .replace(/^\s*\d+\.\s+/gm, '') // ordered lists
 
     const lines = cleanText.split('\n')
