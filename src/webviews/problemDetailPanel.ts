@@ -214,7 +214,7 @@ export class ProblemDetailPanel extends BasePanel {
 
             <div class="section">
                 <h2>Examples</h2>
-                ${examplesHtml || '*No examples provided.*'}
+                ${examplesHtml || md.render('*No examples provided.*')}
             </div>
 
             <div class="section">
