@@ -86,40 +86,56 @@ You can now use the extension in the Extension Development Host window and set b
 
 ## Project Structure
 
-Here's a brief overview of the key files and directories:
+Here's an overview of the project files and directories:
 
 ```
 .
 ├── .vscode/                  # VS Code specific settings (launch.json, tasks.json)
-├── node_modules/             # Project dependencies (including katex)
+├── node_modules/             # Project dependencies
 ├── out/                      # Compiled JavaScript output (from src/)
+├── static/                   # Static assets (images, gifs)
 ├── src/                      # TypeScript source code
 │   ├── extension.ts          # Main activation/deactivation point
-│   ├── api.ts                # Client for interacting with the ACMOJ API
-│   ├── cache.ts              # Handles cache for API responses (problemset, submission)
-│   ├── submissionMonitor.ts  # Monitors submission status and updates the view
-│   ├── auth.ts               # Handles Personal Access Token storage and validation
-│   ├── commands.ts           # Registers and implements VS Code commands
-│   ├── types.ts              # TypeScript interfaces for API responses/data
+│   ├── types.ts              # TypeScript interfaces and types
+│   ├── commands/             # Command registrations and implementations
+│   │   ├── authCommands.ts
+│   │   ├── filterCommands.ts
+│   │   ├── index.ts
+│   │   ├── problemCommands.ts
+│   │   └── submissionCommands.ts
+│   ├── core/                 # Core utilities and API/auth logic
+│   │   ├── api.ts
+│   │   ├── auth.ts
+│   │   └── utils.ts
+│   ├── services/             # Data fetching logic and data handling
+│   │   ├── cacheService.ts
+│   │   ├── problemService.ts
+│   │   ├── problemsetService.ts
+│   │   ├── submissionMonitorService.ts
+│   │   ├── submissionService.ts
+│   │   ├── userService.ts
+│   │   └── workspaceService.ts
 │   ├── views/                # Tree Data Providers for side panel views
-│   │   ├── problemProvider.ts
 │   │   ├── problemsetProvider.ts
 │   │   └── submissionProvider.ts
-│   └── webviews.ts           # Logic for generating and managing Webview panels (problem/submission details)
+│   └── webviews/             # Webview panels for problem/submission details
+│       ├── problemDetailPanel.ts
+│       ├── submissionDetailPanel.ts
+│       └── webviewBase.ts
 ├── .gitignore                # Files ignored by Git
 ├── .vscodeignore             # Files ignored when packaging the extension
 ├── CHANGELOG.md              # Log of changes per version
 ├── CODE_OF_CONDUCT.md        # Code of Conduct for contributors
-├── LICENSE.md                # License for the project
+├── LICENSE                   # License for the project
 ├── CONTRIBUTING.md           # This file!
 ├── package.json              # Extension manifest (metadata, dependencies, contributions, activation)
 ├── README.md                 # Extension documentation for users
 └── tsconfig.json             # TypeScript compiler configuration
 ```
 
-- **`package.json`** is crucial. It defines how the extension integrates with VS Code (commands, views, configuration, activation events).
+- **`package.json`** defines how the extension integrates with VS Code (commands, views, configuration, activation events).
 - **`src/extension.ts`** is the entry point where services are initialized and features are registered.
-- Most user-facing features involve registering a **command** (`src/commands.ts`), potentially interacting with the **API** (`src/api.ts`), managing **authentication** (`src/auth.ts`), and displaying information in **views** (`src/views/`) or **webviews** (`src/webviews.ts`).
+- Most user-facing features involve **registering a command** (`src/commands/`), **fetching the data** (`src/services/`), and **displaying information in tree-views** (`src/views/`) or **webviews** (`src/webviews/`).
 
 ## Coding Style
 
