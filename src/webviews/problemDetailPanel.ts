@@ -154,7 +154,7 @@ export class ProblemDetailPanel extends BasePanel {
                             ${ex.input ? `<button class="copy-btn copy-to-clipboard" data-content="${escapeHtml(ex.input)}" title="Copy input to clipboard">⎘ Clipboard</button>` : ''}
                         </div>
                         </div>
-                        ${ex.description ? `<p>${escapeHtml(ex.description)}</p>` : ''}
+                        ${ex.description ? `<div class="example-description">${md.render(ex.description)}</div>` : ''}
                         ${
                           ex.input !== undefined && ex.input !== null
                             ? `<h5>Input:</h5><pre><code>${escapeHtml(
