@@ -181,6 +181,15 @@ export abstract class BasePanel {
         /* Example Copy Buttons Styling */
         .example-container { margin-bottom: 1.5em; }
         .example-header { display: flex; justify-content: space-between; align-items: center; }
+        .example-description {
+          margin: 8px 0;
+        }
+        .example-description p {
+          margin: 0.5em 0;
+        }
+        .example-description * {
+          max-width: 100%;
+        }
         .copy-buttons { display: flex; gap: 4px; }
         .copy-btn { font-size: 0.8em; padding: 0.2em 0.5em; background-color: var(--vscode-button-secondaryBackground, rgba(100,100,100,0.2)); color: var(--vscode-button-secondaryForeground); border: 1px solid transparent; border-radius: 3px; cursor: pointer; }
         .copy-btn:hover { background-color: var(--vscode-button-secondaryHoverBackground); }
