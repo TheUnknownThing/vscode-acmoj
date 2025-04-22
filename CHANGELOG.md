@@ -221,3 +221,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix the render of "No examples provided."
 - Fix `husky` pre-commit hook to run `prettier` and `eslint` on all files.
+
+## [0.5.2] - 2025-4-22
+
+### Fixed
+
+- Fix the issue where the `example description` is not being rendered correctly in the problem view.
