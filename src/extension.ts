@@ -36,16 +36,17 @@ export async function activate(context: vscode.ExtensionContext) {
   problemsetService = new ProblemsetService(apiClient)
   userService = new UserService(apiClient)
   workspaceService = new WorkspaceService()
+
+  // --- View Provider Registration ---
+  problemsetProvider = new ProblemsetProvider(problemsetService, authService)
+  submissionProvider = new SubmissionProvider(submissionService, authService)
+
   submissionMonitor = new SubmissionMonitorService(
     submissionService,
     submissionProvider,
   )
 
   context.subscriptions.push(authService) // Ensure authService is disposed if needed
-
-  // --- View Provider Registration ---
-  problemsetProvider = new ProblemsetProvider(problemsetService, authService)
-  submissionProvider = new SubmissionProvider(submissionService, authService)
 
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider(

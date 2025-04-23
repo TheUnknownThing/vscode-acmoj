@@ -127,6 +127,7 @@ export class SubmissionMonitorService {
 
     // If there are status changes or submissions were removed, force refresh the submission list
     if (hasChanges) {
+      console.log('Refreshing submission list due to status changes')
       this.submissionProvider.refresh()
     }
   }
