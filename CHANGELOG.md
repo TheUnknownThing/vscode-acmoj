@@ -227,3 +227,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix the issue where the `example description` is not being rendered correctly in the problem view.
+
+## [0.5.3] - 2025-4-23
+
+### Fixed
+
+- Fix the refresh button in problemset view and the submission view to clear the cache and reload the data.
