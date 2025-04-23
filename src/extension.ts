@@ -1,7 +1,6 @@
 import * as vscode from 'vscode'
 import { AuthService } from './core/auth'
 import { ApiClient } from './core/api'
-import { CacheService } from './services/cacheService'
 import { ProblemService } from './services/problemService'
 import { SubmissionService } from './services/submissionService'
 import { ProblemsetService } from './services/problemsetService'
@@ -14,7 +13,6 @@ import { SubmissionMonitorService } from './services/submissionMonitorService'
 import { Profile } from './types'
 
 let authService: AuthService
-let cacheService: CacheService
 let apiClient: ApiClient
 let problemService: ProblemService
 let submissionService: SubmissionService
@@ -30,13 +28,8 @@ let statusBarItem: vscode.StatusBarItem
 export async function activate(context: vscode.ExtensionContext) {
   console.log('ACMOJ extension activating...')
 
-  // --- Configuration ---
-  const config = vscode.workspace.getConfiguration('acmoj')
-  const cacheTtl = config.get<number>('cacheDefaultTtlMinutes', 15)
-
   // --- Service Instantiation (Order matters for dependencies) ---
   authService = new AuthService(context)
-  cacheService = new CacheService(cacheTtl)
   apiClient = new ApiClient(authService)
   problemService = new ProblemService(apiClient)
   submissionService = new SubmissionService(apiClient)
@@ -44,13 +37,11 @@ export async function activate(context: vscode.ExtensionContext) {
   userService = new UserService(apiClient)
   workspaceService = new WorkspaceService()
   submissionMonitor = new SubmissionMonitorService(
-    cacheService,
     submissionService,
     submissionProvider,
   )
 
   context.subscriptions.push(authService) // Ensure authService is disposed if needed
-  context.subscriptions.push({ dispose: () => cacheService.dispose() }) // Dispose cache
 
   // --- View Provider Registration ---
   problemsetProvider = new ProblemsetProvider(problemsetService, authService)
@@ -128,11 +119,11 @@ export async function activate(context: vscode.ExtensionContext) {
         'Cancel',
       )
       if (confirmation === 'Confirm') {
-        cacheService.clear() // Use CacheService to clear all
         vscode.window.showInformationMessage('ACMOJ cache cleared.')
         // Refresh views
-        problemsetProvider.refresh()
-        submissionProvider.refresh()
+        problemsetProvider.refresh() // already clears the problemset cache
+        submissionProvider.refresh() // already clears the submission cache
+        problemService.clearProblemCache()
       }
     }),
   )
