@@ -11,7 +11,11 @@ export class CacheService<T = unknown> {
   private defaultTTL: number
   private stalePeriod: number // Stale period after expiration (milliseconds)
 
-  constructor(defaultTTLInMinutes: number = 5) {
+  constructor(
+    defaultTTLInMinutes: number = vscode.workspace
+      .getConfiguration('acmoj')
+      .get<number>('cacheDefaultTtlMinutes', 15),
+  ) {
     this.defaultTTL = defaultTTLInMinutes * 60 * 1000
     this.stalePeriod = 30 * 60 * 1000 // Default 30 minutes of stale data availability as fallback
 

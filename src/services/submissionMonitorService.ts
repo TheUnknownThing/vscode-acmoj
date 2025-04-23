@@ -13,9 +13,9 @@ export class SubmissionMonitorService {
   private timer: ReturnType<typeof setInterval> | undefined
   private monitorInterval: number = 3000 // Default check interval: 3 seconds
   private maxAttempts: number = 40 // Maximum monitoring duration = interval * maxAttempts (about 2 minutes)
+  private cacheService: CacheService<number> = new CacheService<number>()
 
   constructor(
-    private cacheService: CacheService,
     private submissionService: SubmissionService,
     private submissionProvider: SubmissionProvider,
   ) {
@@ -83,9 +83,6 @@ export class SubmissionMonitorService {
       lastStatus,
     ] of this.monitoredSubmissions.entries()) {
       try {
-        // Clear this submission's cache first to ensure we get the latest status
-        this.cacheService.delete(`submission:${submissionId}`)
-
         const submission =
           await this.submissionService.getSubmissionDetails(submissionId)
         const currentStatus = submission.status
@@ -100,21 +97,23 @@ export class SubmissionMonitorService {
 
           // Show notification
           this.showStatusChangeNotification(submissionId, submission)
-
-          // Clear submission list cache to ensure we get the latest data on refresh
-          this.cacheService.deleteWithPrefix('submissions:')
         }
 
         // If the submission has been processed, remove from monitoring
         if (this.isTerminalStatus(currentStatus)) {
           submissionsToRemove.push(submissionId)
+          if (!hasChanges) {
+            hasChanges = true
+          }
         }
 
-        // Check monitoring duration
         const attempts = this.getMonitoringAttempts(submissionId)
         if (attempts >= this.maxAttempts) {
           submissionsToRemove.push(submissionId)
           console.log(`Submission #${submissionId} monitoring timed out`)
+          if (!hasChanges) {
+            hasChanges = true
+          }
         }
       } catch (error) {
         console.error(`Error checking submission #${submissionId}:`, error)
@@ -126,11 +125,9 @@ export class SubmissionMonitorService {
       this.monitoredSubmissions.delete(id)
     }
 
-    // If there are status changes, force refresh the submission list
+    // If there are status changes or submissions were removed, force refresh the submission list
     if (hasChanges) {
-      // Clear list cache first
-      this.cacheService.deleteWithPrefix('submissions:list:')
-      // Then refresh the view
+      console.log('Refreshing submission list due to status changes')
       this.submissionProvider.refresh()
     }
   }
@@ -141,6 +138,7 @@ export class SubmissionMonitorService {
   private isTerminalStatus(status: string): boolean {
     const terminalStatuses = [
       'Accepted',
+      'Bad Answer',
       'Wrong Answer',
       'Time Limit Exceeded',
       'Memory Limit Exceeded',
