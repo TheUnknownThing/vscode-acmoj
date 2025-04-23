@@ -20,7 +20,6 @@ export class ProblemsetProvider
   > = this._onDidChangeTreeData.event
 
   private allProblemsets: Problemset[] | null = null
-  private problemsetCache: Map<number, Problemset> = new Map() // Keep cache for details
 
   constructor(
     private problemsetService: ProblemsetService,
@@ -31,7 +30,7 @@ export class ProblemsetProvider
 
   refresh(): void {
     this.allProblemsets = null // Clear the full list cache
-    this.problemsetCache.clear() // Clear details cache
+    this.problemsetService.clearAllCaches() // Clear the problemset cache
     this._onDidChangeTreeData.fire()
   }
 
@@ -164,7 +163,10 @@ export class ProblemsetProvider
     // Problemset level: Return problems within the problemset
     if (element instanceof ProblemsetTreeItem) {
       try {
-        let problemsetDetails = this.problemsetCache.get(element.problemset.id)
+        let problemsetDetails =
+          await this.problemsetService.getProblemsetDetails(
+            element.problemset.id,
+          )
         if (!problemsetDetails || !problemsetDetails.problems) {
           console.log(
             `Fetching details for problemset ${element.problemset.id}`,
@@ -172,7 +174,6 @@ export class ProblemsetProvider
           problemsetDetails = await this.problemsetService.getProblemsetDetails(
             element.problemset.id,
           )
-          this.problemsetCache.set(element.problemset.id, problemsetDetails)
         }
 
         if (

@@ -55,4 +55,10 @@ export class ProblemsetService {
       `Problemset cache cleared (Problemset ID: ${problemsetId || 'User List'})`,
     )
   }
+
+  clearAllCaches(): void {
+    this.problemsetsCache.clear()
+    this.problemsetDetailsCache.clear() // Clear the details cache
+    console.log('All problemset caches cleared.')
+  }
 }

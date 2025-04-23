@@ -42,6 +42,7 @@ export class SubmissionProvider
   }
 
   refresh(): void {
+    this.submissionService.clearAllSubmissionCaches()
     this._onDidChangeTreeData.fire()
   }
 
