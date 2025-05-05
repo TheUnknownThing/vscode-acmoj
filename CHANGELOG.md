@@ -233,3 +233,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix the refresh button in problemset view and the submission view to clear the cache and reload the data.
+
+## [0.5.4] - 2025-5-5
+
+### Fixed
+
+- Fix the `fetch code` api to use auth header and align with the new API.

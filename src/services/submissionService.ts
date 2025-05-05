@@ -1,4 +1,3 @@
-import axios from 'axios' // Needed for direct code fetch if required
 import * as querystring from 'querystring'
 import { ApiClient } from '../core/api'
 import { CacheService } from './cacheService'
@@ -141,10 +140,11 @@ export class SubmissionService {
       cacheKey,
       async () => {
         try {
-          const response = await axios.get<string>(codeUrl, {
+          const response = await this.apiClient.get<string>(codeUrl, {
             timeout: 10000, // Separate timeout for code fetching
+            responseType: 'text',
           })
-          return response.data
+          return response
         } catch (error: unknown) {
           let message = 'Unknown error'
           if (error instanceof Error) {
@@ -155,12 +155,9 @@ export class SubmissionService {
             message,
           )
           // Provide a more specific error message
-          if (axios.isAxiosError(error) && error.response?.status === 403) {
+          if (error instanceof Error && error.message.includes('403')) {
             throw new Error('Permission denied to fetch submission code.')
-          } else if (
-            axios.isAxiosError(error) &&
-            error.response?.status === 404
-          ) {
+          } else if (error instanceof Error && error.message.includes('404')) {
             throw new Error('Submission code not found.')
           }
           throw new Error('Failed to fetch submission code.')
