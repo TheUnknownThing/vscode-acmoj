@@ -99,8 +99,7 @@ export class SubmissionMonitorService {
           this.showStatusChangeNotification(submissionId, submission)
         }
 
-        // If the submission has been processed, remove from monitoring
-        if (this.isTerminalStatus(currentStatus)) {
+        if (submission.should_auto_reload) {
           submissionsToRemove.push(submissionId)
           if (!hasChanges) {
             hasChanges = true
@@ -133,27 +132,6 @@ export class SubmissionMonitorService {
   }
 
   /**
-   * Determine if the submission status is terminal (will not change further)
-   */
-  private isTerminalStatus(status: string): boolean {
-    const terminalStatuses = [
-      'Accepted',
-      'Bad Answer',
-      'Wrong Answer',
-      'Time Limit Exceeded',
-      'Memory Limit Exceeded',
-      'Runtime Error',
-      'Compilation Error',
-      'System Error',
-      'Canceled',
-      'Aborted',
-      'Judged',
-      'Failed',
-    ]
-    return terminalStatuses.includes(status)
-  }
-
-  /**
    * Show status change notification
    */
   private showStatusChangeNotification(
@@ -162,7 +140,7 @@ export class SubmissionMonitorService {
   ) {
     const message = `Submission #${submissionId} ${submission.status}`
 
-    if (this.isTerminalStatus(submission.status)) {
+    if (!submission.should_auto_reload) {
       // Show details button for terminal status
       vscode.window
         .showInformationMessage(message, 'View Details')

@@ -67,6 +67,7 @@ export interface Submission {
   time_msecs: number | null
   memory_bytes: number | null
   status: SubmissionStatus
+  should_auto_reload: boolean
   should_show_score: boolean
   created_at: string
   code_url: string | null
@@ -114,4 +115,34 @@ export interface Problemset {
 export interface ApiError {
   message: string
   // might include more fields like code, details, etc.
+}
+
+export interface JudgeStatusDetail {
+  name: string
+  name_short: string
+  color: string // Bootstrap color name
+}
+
+export type JudgeStatusInfo = Record<string, JudgeStatusDetail>
+
+export interface LanguageDetail {
+  name: string
+  extension: string | null
+}
+
+export type LanguageInfo = Record<string, LanguageDetail>
+
+export interface RunnerStatusDetail {
+  name: string
+  color: string // Bootstrap color name
+}
+
+export interface Runner {
+  id: string
+  name: string
+  hardware: string
+  provider: string
+  status: RunnerStatusDetail
+  message: string
+  last_seen: string // ISO date-time string
 }

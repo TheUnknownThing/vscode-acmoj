@@ -88,9 +88,7 @@ export class SubmissionService {
 
     const cached = this.submissionDetailCache.get(cacheKey)
     if (cached) {
-      // Check if cached submission is terminal
-      if (this.isTerminalStatus(cached.status)) {
-        // console.log(`[Cache HIT] Submission ${submissionId}`);
+      if (!cached.should_auto_reload) {
         return cached
       }
     }
@@ -102,27 +100,10 @@ export class SubmissionService {
     )
 
     // Cache based on status: longer for terminal, shorter for pending/judging
-    const ttlMinutes = this.isTerminalStatus(submission.status) ? 15 : 1 // 15 min for terminal, 1 min otherwise
+    const ttlMinutes = submission.should_auto_reload ? 1 : 15 // 15 min for terminal stat, 1 min otherwise
     this.submissionDetailCache.set(cacheKey, submission, ttlMinutes)
 
     return submission
-  }
-
-  // Helper to determine if a status means the submission won't change
-  private isTerminalStatus(status: string): boolean {
-    const terminalStatuses = [
-      'ACCEPTED',
-      'WRONG_ANSWER',
-      'TIME_LIMIT_EXCEEDED',
-      'MEMORY_LIMIT_EXCEEDED',
-      'RUNTIME_ERROR',
-      'COMPILE_ERROR',
-      'SYSTEM_ERROR',
-      'CANCELED',
-      'SKIPPED',
-      'PRESENTATION_ERROR', // Add any other final states
-    ]
-    return terminalStatuses.includes(status?.toUpperCase())
   }
 
   async getSubmissionCode(
@@ -174,7 +155,7 @@ export class SubmissionService {
     // Clear relevant caches
     this.clearSubmissionListCaches()
     this.submissionDetailCache.delete(`submission:detail:${submissionId}`)
-    this.submissionCodeCache.delete(`submission:code:${submissionId}`) // Also clear code cache
+    this.submissionCodeCache.delete(`submission:code:${submissionId}`)
     console.log(`Submission ${submissionId} aborted and caches cleared.`)
   }
 
