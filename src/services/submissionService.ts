@@ -8,12 +8,20 @@ type SubmissionListCache = {
   next: string | null
 }
 
+/**
+ * Service for managing submissions in the Online Judge platform.
+ * Handles submission creation, retrieval, and caching of submission data.
+ */
 export class SubmissionService {
   private apiClient: ApiClient
   private submissionListCache: CacheService<SubmissionListCache>
   private submissionDetailCache: CacheService<Submission>
   private submissionCodeCache: CacheService<string>
 
+  /**
+   * Creates a new SubmissionService instance.
+   * @param apiClient - The API client used to make requests
+   */
   constructor(apiClient: ApiClient) {
     this.apiClient = apiClient
     this.submissionListCache = new CacheService<SubmissionListCache>()
@@ -21,6 +29,14 @@ export class SubmissionService {
     this.submissionCodeCache = new CacheService<string>()
   }
 
+  /**
+   * Submits code to the Online Judge platform.
+   * @param problemId - The ID of the problem being submitted
+   * @param language - The programming language of the submission
+   * @param code - The source code to submit
+   * @param isPublic - Whether the submission should be public (default false)
+   * @returns A promise resolving to an object containing the submission ID
+   */
   async submitCode(
     problemId: number,
     language: string,
@@ -43,6 +59,16 @@ export class SubmissionService {
     return response
   }
 
+  /**
+   * Fetches a list of submissions with optional filters.
+   * Uses cache with a default TTL of 5 minutes.
+   * @param cursor - Optional cursor for pagination
+   * @param username - Optional username filter
+   * @param problemId - Optional problem ID filter
+   * @param status - Optional submission status filter
+   * @param lang - Optional programming language filter
+   * @returns A promise resolving to an object containing submissions and next cursor
+   */
   async getSubmissions(
     cursor?: string,
     username?: string,
@@ -81,6 +107,12 @@ export class SubmissionService {
     )
   }
 
+  /**
+   * Fetches detailed information about a specific submission.
+   * Uses cache with different TTLs based on submission status.
+   * @param submissionId - The ID of the submission to fetch
+   * @returns A promise resolving to the Submission object
+   */
   async getSubmissionDetails(submissionId: number): Promise<Submission> {
     const cacheKey = `submission:detail:${submissionId}`
     // Check cache first, but fetch function will always call API
@@ -106,6 +138,14 @@ export class SubmissionService {
     return submission
   }
 
+  /**
+   * Fetches the source code for a submission.
+   * Uses cache with a default TTL of 60 minutes.
+   * @param submissionId - The ID of the submission
+   * @param codeUrl - The URL to fetch the code from
+   * @returns A promise resolving to the submission code as string
+   * @throws Error if code URL is not available or fetch fails
+   */
   async getSubmissionCode(
     submissionId: number,
     codeUrl?: string,
@@ -148,6 +188,11 @@ export class SubmissionService {
     )
   }
 
+  /**
+   * Attempts to abort a running submission.
+   * @param submissionId - The ID of the submission to abort
+   * @returns A promise that resolves when the abort is complete
+   */
   async abortSubmission(submissionId: number): Promise<void> {
     // No caching for abort action
     await this.apiClient.post<void>(`/submission/${submissionId}/abort`)
@@ -161,20 +206,29 @@ export class SubmissionService {
 
   // --- Cache Management ---
 
-  /** Clears all submission list caches */
+  /**
+   * Clears all submission list caches.
+   * Used when new submissions are made or statuses change.
+   */
   clearSubmissionListCaches(): void {
     this.submissionListCache.deleteWithPrefix('submissions:list:')
     // console.log('Submission list caches cleared.');
   }
 
-  /** Clears cache for a specific submission */
+  /**
+   * Clears cache for a specific submission.
+   * @param submissionId - The ID of the submission to clear
+   */
   clearSubmissionDetailCache(submissionId: number): void {
     this.submissionDetailCache.delete(`submission:detail:${submissionId}`)
     this.submissionCodeCache.delete(`submission:code:${submissionId}`)
     // console.log(`Cache cleared for submission ${submissionId}.`);
   }
 
-  /** Clears all submission-related caches */
+  /**
+   * Clears all submission-related caches.
+   * Used when needing to force fresh data from the server.
+   */
   clearAllSubmissionCaches(): void {
     this.clearSubmissionListCaches()
     this.submissionDetailCache.deleteWithPrefix('submission:detail:')
