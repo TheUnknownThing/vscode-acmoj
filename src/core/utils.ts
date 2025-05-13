@@ -1,5 +1,3 @@
-import * as vscode from 'vscode'
-
 // Simple HTML escaping
 export function escapeHtml(unsafe: string | null | undefined): string {
   if (unsafe === null || unsafe === undefined) return ''
@@ -80,33 +78,4 @@ export function getFileExtension(languageId: string): string {
     plaintext: 'txt',
   }
   return extensionMap[languageId] || 'txt'
-}
-
-// Open code in a new editor
-export async function openCodeInEditor(
-  code: string,
-  language: string,
-  title: string, // e.g., "Submission 123 - Problem 456"
-): Promise<void> {
-  if (!code) {
-    vscode.window.showErrorMessage('Cannot open empty code in editor.')
-    return
-  }
-  try {
-    const languageId = mapLanguageToVscode(language)
-    const doc = await vscode.workspace.openTextDocument({
-      content: code,
-      language: languageId,
-    })
-    await vscode.window.showTextDocument(doc, { preview: false })
-    vscode.window.showInformationMessage(
-      `Opened code for "${title}" in a new editor.`,
-    )
-  } catch (error: unknown) {
-    let message = 'Unknown error'
-    if (error instanceof Error) {
-      message = error.message
-    }
-    vscode.window.showErrorMessage(`Failed to open code in editor: ${message}`)
-  }
 }

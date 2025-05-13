@@ -295,7 +295,6 @@ export function registerSubmissionCommands(
               vscode.window.showInformationMessage(
                 `Successfully submitted P${problemId}. Submission ID: ${result.id}`,
               )
-              submissionProvider.refresh() // Refresh submission list
               submissionMonitor.addSubmission(result.id)
             } catch (error: unknown) {
               let message = 'Unknown error'
