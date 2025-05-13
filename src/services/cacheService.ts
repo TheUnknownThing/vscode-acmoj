@@ -1,16 +1,34 @@
 import * as vscode from 'vscode'
 
+/**
+ * Generic caching service with TTL and stale-while-revalidate functionality.
+ * Provides methods to store, retrieve and manage cached data with expiration.
+ *
+ * @template T - Type of data to be cached
+ */
 interface CacheEntry<T> {
   data: T
   expires: number
-  staleUntil?: number // Allow data to be used as a fallback after expiration
+  staleUntil?: number
 }
 
+/**
+ * Service for caching data with time-to-live (TTL) and stale data handling.
+ * Automatically cleans expired entries and supports fallback to stale data
+ * when network requests fail.
+ *
+ * @template T - Type of data to be stored in the cache
+ */
 export class CacheService<T = unknown> {
   private cache: Map<string, CacheEntry<T>> = new Map()
   private defaultTTL: number
   private stalePeriod: number // Stale period after expiration (milliseconds)
 
+  /**
+   * Creates a new CacheService instance.
+   *
+   * @param defaultTTLInMinutes - Default time-to-live for cache entries in minutes
+   */
   constructor(
     defaultTTLInMinutes: number = vscode.workspace
       .getConfiguration('acmoj')
@@ -24,7 +42,11 @@ export class CacheService<T = unknown> {
   }
 
   /**
-   * Get a cache item by key
+   * Gets a cache item by key.
+   * Returns undefined if the item has expired or doesn't exist.
+   *
+   * @param key - Unique identifier for the cache entry
+   * @returns The cached data or undefined if expired/not found
    */
   get(key: string): T | undefined {
     const entry = this.cache.get(key)
@@ -43,7 +65,11 @@ export class CacheService<T = unknown> {
   }
 
   /**
-   * Store an item in the cache
+   * Stores an item in the cache with optional custom TTL.
+   *
+   * @param key - Unique identifier for the cache entry
+   * @param data - Data to be stored
+   * @param ttlMinutes - Optional custom TTL in minutes
    */
   set(key: string, data: T, ttlMinutes?: number): void {
     const ttl = ttlMinutes ? ttlMinutes * 60 * 1000 : this.defaultTTL
@@ -56,29 +82,34 @@ export class CacheService<T = unknown> {
   }
 
   /**
-   * Remove an entry from the cache
+   * Removes an entry from the cache.
+   *
+   * @param key - Unique identifier for the cache entry
    */
   delete(key: string): void {
     this.cache.delete(key)
   }
 
   /**
-   * Clear the entire cache
+   * Clears the entire cache.
    */
   clear(): void {
     this.cache.clear()
   }
 
   /**
-   * Dispose of the cache service
-   * This is a no-op in this implementation but can be used for cleanup if needed
+   * Disposes of the cache service.
+   * This is a no-op in this implementation but can be used for cleanup if needed.
    */
   dispose(): void {
     // No-op for now
   }
 
   /**
-   * Clean expired cache entries
+   * Cleans expired cache entries.
+   * Only removes entries that are completely expired (including stale period).
+   *
+   * @private
    */
   private cleanExpiredEntries(): void {
     const now = Date.now()
@@ -91,7 +122,13 @@ export class CacheService<T = unknown> {
   }
 
   /**
-   * Get from cache or fetch from API
+   * Gets data from cache or fetches it using the provided function.
+   * Falls back to stale data if fetch fails and stale data is available.
+   *
+   * @param key - Unique identifier for the cache entry
+   * @param fetchFn - Function to fetch fresh data if not in cache
+   * @param ttlMinutes - Optional custom TTL in minutes
+   * @returns Promise resolving to the requested data
    */
   async getOrFetch(
     key: string,
@@ -123,7 +160,11 @@ export class CacheService<T = unknown> {
   }
 
   /**
-   * Get an entry that is expired but still within stale period
+   * Gets an entry that is expired but still within stale period.
+   *
+   * @param key - Unique identifier for the cache entry
+   * @returns The stale data or undefined if not available
+   * @private
    */
   private getStaleEntry(key: string): T | undefined {
     const entry = this.cache.get(key)
@@ -139,7 +180,9 @@ export class CacheService<T = unknown> {
   }
 
   /**
-   * Delete entries with matching prefix
+   * Deletes all cache entries with keys that start with the given prefix.
+   *
+   * @param prefix - The prefix to match against cache keys
    */
   deleteWithPrefix(prefix: string): void {
     this.cache.forEach((_, key) => {

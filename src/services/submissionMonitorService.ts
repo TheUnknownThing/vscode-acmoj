@@ -5,23 +5,30 @@ import { Submission } from '../types'
 import { CacheService } from './cacheService'
 
 /**
- * Submission monitoring service
- * Used to track recent submissions and refresh the submission list when status changes
+ * Service for monitoring submission status changes in real-time.
+ * Tracks submissions through their lifecycle (Queued -> Judging -> Completed)
+ * and provides notifications when status changes occur.
+ * Automatically refreshes the submission list view when needed.
  */
 export class SubmissionMonitorService {
-  private monitoredSubmissions: Map<number, string> = new Map()
+  private monitoredSubmissions: number[] = []
   private timer: ReturnType<typeof setInterval> | undefined
-  private monitorInterval: number = 3000 // Default check interval: 3 seconds
+  private monitorInterval: number = 4000 // Default check interval: 4 seconds
   private maxAttempts: number = 40 // Maximum monitoring duration = interval * maxAttempts (about 2 minutes)
   private cacheService: CacheService<number> = new CacheService<number>()
 
+  /**
+   * Creates a new SubmissionMonitorService instance.
+   * @param submissionService - The submission service for fetching submission details
+   * @param submissionProvider - The submission provider for refreshing the view
+   */
   constructor(
     private submissionService: SubmissionService,
     private submissionProvider: SubmissionProvider,
   ) {
     // Read monitoring interval from configuration
     const config = vscode.workspace.getConfiguration('acmoj')
-    this.monitorInterval = config.get<number>('submissionMonitorInterval', 3000)
+    this.monitorInterval = config.get<number>('submissionMonitorInterval', 4000)
 
     // Calculate max attempts = timeout / monitoring interval
     const timeout = config.get<number>('submissionMonitorTimeout', 120000)
@@ -29,7 +36,8 @@ export class SubmissionMonitorService {
   }
 
   /**
-   * Start the monitoring service
+   * Starts the monitoring service.
+   * Begins periodic checks of monitored submissions.
    */
   start() {
     if (this.timer) {
@@ -44,7 +52,8 @@ export class SubmissionMonitorService {
   }
 
   /**
-   * Stop the monitoring service
+   * Stops the monitoring service.
+   * Clears all monitored submissions and stops periodic checks.
    */
   stop() {
     if (this.timer) {
@@ -52,68 +61,56 @@ export class SubmissionMonitorService {
       this.timer = undefined
       console.log('Submission monitor service stopped')
     }
-    this.monitoredSubmissions.clear()
+    this.monitoredSubmissions = [] // Clear monitored submissions
   }
 
   /**
-   * Add a submission to the monitoring list
+   * Adds a submission to be monitored.
+   * @param submissionId - The ID of the submission to monitor
+   * @param initialStatus - The initial status of the submission (default 'Queued')
    */
-  addSubmission(submissionId: number, initialStatus: string = 'Queued') {
-    console.log(
-      `Adding submission #${submissionId} to monitor (${initialStatus})`,
-    )
-    this.monitoredSubmissions.set(submissionId, initialStatus)
+  addSubmission(submissionId: number) {
+    console.log(`Adding submission #${submissionId} to monitor`)
+    this.monitoredSubmissions.push(submissionId)
     this.start() // Ensure monitoring is started
   }
 
   /**
-   * Check all monitored submissions
+   * Checks all monitored submissions for status changes.
+   * @private
    */
   private async checkSubmissions() {
-    if (this.monitoredSubmissions.size === 0) {
+    if (this.monitoredSubmissions.length === 0) {
       this.stop() // No submissions to monitor, stop the service
       return
     }
 
-    let hasChanges = false
     const submissionsToRemove: number[] = []
 
-    for (const [
-      submissionId,
-      lastStatus,
-    ] of this.monitoredSubmissions.entries()) {
+    for (const submissionId of this.monitoredSubmissions) {
       try {
         const submission =
           await this.submissionService.getSubmissionDetails(submissionId)
         const currentStatus = submission.status
 
-        // If the status has changed
-        if (lastStatus !== currentStatus) {
+        if (submission.should_auto_reload) {
           console.log(
-            `Submission #${submissionId} status changed: ${lastStatus} -> ${currentStatus}`,
+            `Submission #${submissionId} status changed: ${currentStatus}`,
           )
-          this.monitoredSubmissions.set(submissionId, currentStatus)
-          hasChanges = true
-
-          // Show notification
-          this.showStatusChangeNotification(submissionId, submission)
-        }
-
-        // If the submission has been processed, remove from monitoring
-        if (this.isTerminalStatus(currentStatus)) {
+        } else {
+          // show terminal status
+          console.log(
+            `Submission #${submissionId} changed to terminal status: ${currentStatus}`,
+          )
           submissionsToRemove.push(submissionId)
-          if (!hasChanges) {
-            hasChanges = true
-          }
         }
+
+        this.showStatusChangeNotification(submissionId, submission)
 
         const attempts = this.getMonitoringAttempts(submissionId)
         if (attempts >= this.maxAttempts) {
           submissionsToRemove.push(submissionId)
           console.log(`Submission #${submissionId} monitoring timed out`)
-          if (!hasChanges) {
-            hasChanges = true
-          }
         }
       } catch (error) {
         console.error(`Error checking submission #${submissionId}:`, error)
@@ -122,39 +119,20 @@ export class SubmissionMonitorService {
 
     // Remove completed submissions
     for (const id of submissionsToRemove) {
-      this.monitoredSubmissions.delete(id)
+      const index = this.monitoredSubmissions.indexOf(id)
+      if (index !== -1) {
+        this.monitoredSubmissions.splice(index, 1)
+        console.log(`Removing submission #${id} from monitor`)
+      }
     }
-
-    // If there are status changes or submissions were removed, force refresh the submission list
-    if (hasChanges) {
-      console.log('Refreshing submission list due to status changes')
-      this.submissionProvider.refresh()
-    }
+    this.submissionProvider.refresh()
   }
 
   /**
-   * Determine if the submission status is terminal (will not change further)
-   */
-  private isTerminalStatus(status: string): boolean {
-    const terminalStatuses = [
-      'Accepted',
-      'Bad Answer',
-      'Wrong Answer',
-      'Time Limit Exceeded',
-      'Memory Limit Exceeded',
-      'Runtime Error',
-      'Compilation Error',
-      'System Error',
-      'Canceled',
-      'Aborted',
-      'Judged',
-      'Failed',
-    ]
-    return terminalStatuses.includes(status)
-  }
-
-  /**
-   * Show status change notification
+   * Shows a notification when a submission's status changes.
+   * @param submissionId - The ID of the submission
+   * @param submission - The submission details
+   * @private
    */
   private showStatusChangeNotification(
     submissionId: number,
@@ -162,7 +140,7 @@ export class SubmissionMonitorService {
   ) {
     const message = `Submission #${submissionId} ${submission.status}`
 
-    if (this.isTerminalStatus(submission.status)) {
+    if (!submission.should_auto_reload) {
       // Show details button for terminal status
       vscode.window
         .showInformationMessage(message, 'View Details')
@@ -178,7 +156,10 @@ export class SubmissionMonitorService {
   }
 
   /**
-   * Get monitoring attempt count (prevents infinite monitoring)
+   * Tracks and returns the number of monitoring attempts for a submission.
+   * @param submissionId - The ID of the submission
+   * @returns The number of monitoring attempts
+   * @private
    */
   private getMonitoringAttempts(submissionId: number): number {
     const key = `monitor_attempts_${submissionId}`

@@ -80,7 +80,7 @@ This extension contributes the following settings (accessible via `File > Prefer
 - `acmoj.apiRetryCount`: Number of times to retry failed API requests. Default: `3`
 - `acmoj.apiRetryDelay`: Delay in milliseconds between API retry attempts. Default: `1000`
 - `acmoj.apiRequestTimeout`: Timeout in milliseconds for API requests. Default: `15000`
-- `acmoj.submissionMonitorInterval`: Interval in milliseconds for checking submission status updates. Default: `3000`
+- `acmoj.submissionMonitorInterval`: Interval in milliseconds for checking submission status updates. Default: `4000`
 - `acmoj.submissionMonitorTimeout`: Maximum time in milliseconds to monitor a submission before timing out. Default: `120000`
 
 ## Known Issues

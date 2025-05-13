@@ -6,15 +6,34 @@ import { mapLanguageToVscode } from '../core/utils'
 
 const execAsync = promisify(exec)
 
+/**
+ * Service for managing workspace and editor interactions.
+ * Handles file operations, language mappings, and VSCode workspace integration.
+ */
 export class WorkspaceService {
+  /**
+   * Gets the currently active text editor.
+   * @returns The active text editor or undefined if none is active
+   */
   getActiveEditor(): vscode.TextEditor | undefined {
     return vscode.window.activeTextEditor
   }
 
+  /**
+   * Gets the document from the currently active text editor.
+   * @returns The active document or undefined if none is active
+   */
   getActiveDocument(): vscode.TextDocument | undefined {
     return vscode.window.activeTextEditor?.document
   }
 
+  /**
+   * Opens code in a new editor with proper language highlighting.
+   * @param code - The code content to open
+   * @param language - The programming language of the code
+   * @param submissionId - The submission ID for reference
+   * @throws Error if code content is empty
+   */
   async openCodeInEditor(
     code: string,
     language: string,
@@ -38,6 +57,10 @@ export class WorkspaceService {
     )
   }
 
+  /**
+   * Saves the currently active document if it has unsaved changes.
+   * @returns True if document was saved or already saved, false if save failed
+   */
   async saveActiveDocument(): Promise<boolean> {
     const document = this.getActiveDocument()
     if (document && document.isDirty) {
@@ -46,6 +69,13 @@ export class WorkspaceService {
     return true // Already saved or no document
   }
 
+  /**
+   * Ensures a document has a problem ID comment in the first line.
+   * Adds or updates the comment if needed.
+   * @param document - The document to check
+   * @param problemId - The problem ID to include in comment
+   * @param languageId - The language ID for comment syntax
+   */
   async ensureDocumentHasProblemIdComment(
     document: vscode.TextDocument,
     problemId: number,
@@ -101,6 +131,11 @@ export class WorkspaceService {
     }
   }
 
+  /**
+   * Extracts a problem ID from comment in the first line of text.
+   * @param text - The text to search for problem ID comment
+   * @returns The extracted problem ID or undefined if not found
+   */
   extractProblemIdFromText(text: string): number | undefined {
     const firstLine = text.split('\n', 1)[0].trim()
     const match = firstLine.match(/(?:\/\/|#)\s*acmoj:\s*(\d+)/)
@@ -110,6 +145,11 @@ export class WorkspaceService {
     return undefined
   }
 
+  /**
+   * Extracts a problem ID from a filename using common naming patterns.
+   * @param filePath - The file path to analyze
+   * @returns The extracted problem ID or undefined if not found
+   */
   extractProblemIdFromFileName(filePath: string): number | undefined {
     const fileName = path.basename(filePath)
     // Regex tries to find numbers preceded by P or nothing, followed by non-digit or end
@@ -121,6 +161,11 @@ export class WorkspaceService {
     return undefined
   }
 
+  /**
+   * Gets Git remote fetch URLs for a workspace folder.
+   * @param folderPath - Optional specific folder path to check
+   * @returns Array of Git remote URLs or empty array if none found
+   */
   async getGitRemoteFetchUrls(folderPath?: string): Promise<string[]> {
     const workspaceFolders = vscode.workspace.workspaceFolders
     let repoPath = folderPath
@@ -199,6 +244,12 @@ export class WorkspaceService {
     }
   }
 
+  /**
+   * Maps VSCode language ID to Online Judge language format.
+   * @param vscodeLangId - The VSCode language ID
+   * @param availableLangs - Array of languages supported by the problem
+   * @returns The matching OJ language format or undefined if no match
+   */
   mapLanguageIdToOJFormat(
     vscodeLangId: string,
     availableLangs: string[],

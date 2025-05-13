@@ -181,9 +181,6 @@ export class ProblemsetProvider
           problemsetDetails.problems &&
           problemsetDetails.problems.length > 0
         ) {
-          // Sort problems by ID
-          problemsetDetails.problems.sort((a, b) => a.id - b.id)
-
           const result: AcmojTreeItem[] = []
 
           // Add description as multiple line items
