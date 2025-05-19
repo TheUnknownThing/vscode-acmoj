@@ -245,3 +245,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix the submission monitor service to align with the new API and fix the issue where the submission is not removed from the list after it is changed to terminal status.
+
+## [0.6.0] - 2025-5-19
+
+### Added
+
+- Full support for pre-submit hooks.
+
+### Fixed
+
+- Missing 's' in `acmoj.refreshProblemsets` in command registration.

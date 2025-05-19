@@ -3,7 +3,7 @@ import * as path from 'path'
 import { AuthService } from '../core/auth'
 import { SubmissionService } from '../services/submissionService'
 import { ProblemService } from '../services/problemService'
-import { WorkspaceService } from '../services/workspaceService'
+import { WorkspaceService, PreSubmitResult } from '../services/workspaceService' // PreSubmitResult is used
 import { SubmissionMonitorService } from '../services/submissionMonitorService'
 import { SubmissionDetailPanel } from '../webviews/submissionDetailPanel'
 import { SubmissionProvider } from '../views/submissionProvider'
@@ -12,10 +12,10 @@ export function registerSubmissionCommands(
   context: vscode.ExtensionContext,
   authService: AuthService,
   submissionService: SubmissionService,
-  problemService: ProblemService, // Needed for submit language check
-  workspaceService: WorkspaceService, // Needed for submit file access
+  problemService: ProblemService,
+  workspaceService: WorkspaceService,
   submissionMonitor: SubmissionMonitorService,
-  submissionProvider: SubmissionProvider, // Needed for refresh
+  submissionProvider: SubmissionProvider,
 ) {
   context.subscriptions.push(
     vscode.commands.registerCommand(
@@ -26,11 +26,9 @@ export function registerSubmissionCommands(
           vscode.window.showErrorMessage('Invalid or missing submission ID.')
           return
         }
-
-        if (!(await authService.checkLoginAndPrompt)) return
+        if (!(await authService.checkLoginAndPrompt())) return
 
         try {
-          // Use the static method on the Panel class
           SubmissionDetailPanel.createOrShow(
             context.extensionUri,
             submissionId,
@@ -38,9 +36,7 @@ export function registerSubmissionCommands(
           )
         } catch (error: unknown) {
           let message = 'Unknown error'
-          if (error instanceof Error) {
-            message = error.message
-          }
+          if (error instanceof Error) message = error.message
           vscode.window.showErrorMessage(
             `Failed to show submission ${submissionId}: ${message}`,
           )
@@ -57,7 +53,7 @@ export function registerSubmissionCommands(
           )
           return
         }
-        if (!(await authService.checkLoginAndPrompt)) return
+        if (!(await authService.checkLoginAndPrompt())) return
 
         const confirm = await vscode.window.showQuickPick(['Yes', 'No'], {
           placeHolder: `Abort submission #${submissionId}? This cannot be undone.`,
@@ -80,9 +76,7 @@ export function registerSubmissionCommands(
               submissionProvider.refresh()
             } catch (error: unknown) {
               let message = 'Unknown error'
-              if (error instanceof Error) {
-                message = error.message
-              }
+              if (error instanceof Error) message = error.message
               vscode.window.showErrorMessage(
                 `Failed to abort submission #${submissionId}: ${message}`,
               )
@@ -92,7 +86,6 @@ export function registerSubmissionCommands(
       },
     ),
 
-    // Command called from Webview to open code
     vscode.commands.registerCommand(
       'acmoj.openSubmissionCode',
       async (args: {
@@ -107,13 +100,13 @@ export function registerSubmissionCommands(
           )
           return
         }
-        if (!(await authService.checkLoginAndPrompt)) return
+        if (!(await authService.checkLoginAndPrompt())) return
 
         try {
           const code = await submissionService.getSubmissionCode(
             args.submissionId,
             args.codeUrl,
-          ) // Fetch code via service
+          )
           await workspaceService.openCodeInEditor(
             code,
             args.language,
@@ -121,9 +114,7 @@ export function registerSubmissionCommands(
           )
         } catch (error: unknown) {
           let message = 'Unknown error'
-          if (error instanceof Error) {
-            message = error.message
-          }
+          if (error instanceof Error) message = error.message
           vscode.window.showErrorMessage(
             `Failed to open submission code: ${message}`,
           )
@@ -131,11 +122,10 @@ export function registerSubmissionCommands(
       },
     ),
 
-    // --- Submit Current File Command ---
     vscode.commands.registerCommand(
       'acmoj.submitCurrentFile',
       async (contextArgs?: number | { problemId?: number }) => {
-        if (!(await authService.checkLoginAndPrompt)) return
+        if (!(await authService.checkLoginAndPrompt())) return
 
         const editor = workspaceService.getActiveEditor()
         if (!editor) {
@@ -144,10 +134,9 @@ export function registerSubmissionCommands(
         }
         const document = editor.document
         const filePath = document.fileName
-        const fileContent = document.getText()
-        const fileLanguageId = document.languageId // VS Code language ID
+        const initialFileContent = document.getText() // Keep original for fallback if hooks don't run
+        const fileLanguageId = document.languageId
 
-        // --- Determine Problem ID ---
         let problemId: number | undefined
         if (typeof contextArgs === 'number') {
           problemId = contextArgs
@@ -155,11 +144,9 @@ export function registerSubmissionCommands(
           problemId = contextArgs.problemId
         }
 
-        let attemptedProblemId: number | undefined
         if (typeof problemId !== 'number') {
-          // Try extracting from comment first, then filename
-          attemptedProblemId =
-            workspaceService.extractProblemIdFromText(fileContent) ??
+          const attemptedProblemId =
+            workspaceService.extractProblemIdFromText(initialFileContent) ??
             workspaceService.extractProblemIdFromFileName(filePath)
 
           const problemIdStr = await vscode.window.showInputBox({
@@ -169,18 +156,17 @@ export function registerSubmissionCommands(
               /^\d+$/.test(text) ? null : 'Please enter a valid number ID',
             ignoreFocusOut: true,
           })
-          if (!problemIdStr) return // User cancelled
+          if (!problemIdStr) return
           problemId = parseInt(problemIdStr, 10)
         }
 
-        // --- Determine Language ---
         let availableLanguages: string[] = [
           'cpp',
           'python',
           'java',
           'git',
           'verilog',
-        ] // Sensible defaults
+        ]
         try {
           const problemDetails =
             await problemService.getProblemDetails(problemId)
@@ -192,9 +178,7 @@ export function registerSubmissionCommands(
           }
         } catch (error: unknown) {
           let message = 'Unknown error'
-          if (error instanceof Error) {
-            message = error.message
-          }
+          if (error instanceof Error) message = error.message
           vscode.window.showWarningMessage(
             `Could not fetch accepted languages for P${problemId}. Using defaults. Error: ${message}`,
           )
@@ -204,7 +188,6 @@ export function registerSubmissionCommands(
           fileLanguageId,
           availableLanguages,
         )
-
         const languageItems: vscode.QuickPickItem[] = availableLanguages.map(
           (lang) => ({
             label: lang,
@@ -221,19 +204,99 @@ export function registerSubmissionCommands(
             ignoreFocusOut: true,
           },
         )
-
-        if (!selectedLanguageItem) return // User cancelled
+        if (!selectedLanguageItem) return
         const selectedLanguage = selectedLanguageItem.label
 
-        // --- Handle Git Submission ---
-        let codeToSubmit = fileContent
+        let codeToSubmitForOJ = initialFileContent // Default to initial content
+        let hookResult: PreSubmitResult | undefined = undefined
+
+        // --- PRE-SUBMIT HOOKS ---
+        if (selectedLanguage !== 'git') {
+          try {
+            await workspaceService.saveActiveDocument() // Save before hooks
+            const currentContentForHooks = document.getText() // Re-read after save
+
+            // processPreSubmitHooks will return a result even if no hooks file is found
+            // or if hooks run but don't use 'submit' output.
+            hookResult = await workspaceService.processPreSubmitHooks(
+              document,
+              currentContentForHooks,
+            )
+
+            if (hookResult.error) {
+              // This error is from parsing pre-submit.json or a non-critical hook failure
+              vscode.window.showErrorMessage(
+                `Pre-submit hooks problem: ${hookResult.error}. Submission aborted.`,
+              )
+              return
+            }
+            // At this point, hookResult.content contains the processed content
+            // and hookResult.outputUsed indicates if 'submit' was used.
+          } catch (criticalHookError: unknown) {
+            // This catch block is for critical errors thrown by processPreSubmitHooks
+            // (e.g., a hook script/command exited with an error code and was configured to halt)
+            if (criticalHookError instanceof Error) {
+              vscode.window.showErrorMessage(
+                `A critical pre-submit hook failed: ${criticalHookError.message}. Submission aborted.`,
+              )
+            } else {
+              vscode.window.showErrorMessage(
+                `A critical pre-submit hook encountered an unknown error. Submission aborted.`,
+              )
+            }
+            return
+          }
+        }
+        // --- END PRE-SUBMIT HOOKS ---
+
+        // --- Determine Final Code to Submit and Handle Problem ID Comment ---
+        if (hookResult && hookResult.outputUsed) {
+          // If hooks used 'output: "submit"', their combined output is the code to submit.
+          codeToSubmitForOJ = hookResult.content
+          // Still add problem ID to the *source file* for user convenience,
+          // but it doesn't affect the `codeToSubmitForOJ`.
+          if (selectedLanguage !== 'git') {
+            await workspaceService.ensureDocumentHasProblemIdComment(
+              document,
+              problemId,
+              fileLanguageId,
+            )
+          }
+        } else if (hookResult) {
+          // Hooks ran, but did not use 'output: "submit"'.
+          // The content might have been modified by actions or piped.
+          codeToSubmitForOJ = hookResult.content
+          if (selectedLanguage !== 'git') {
+            await workspaceService.ensureDocumentHasProblemIdComment(
+              document,
+              problemId,
+              fileLanguageId,
+            )
+            // Since outputUsed is false, the submission should reflect the final state of the source file.
+            codeToSubmitForOJ = document.getText()
+          }
+        } else {
+          // No hooks ran (e.g., selectedLanguage was 'git', or no pre-submit.json)
+          // codeToSubmitForOJ remains initialFileContent at this stage.
+          // Add problem ID comment to the source file.
+          if (selectedLanguage !== 'git') {
+            await workspaceService.ensureDocumentHasProblemIdComment(
+              document,
+              problemId,
+              fileLanguageId,
+            )
+            codeToSubmitForOJ = document.getText() // Use the potentially modified document content
+          }
+        }
+
+        // --- Handle Git Submission (if selectedLanguage is 'git', hooks were skipped) ---
         if (selectedLanguage === 'git') {
           const folderPath = path.dirname(filePath)
           const remoteUrls =
             await workspaceService.getGitRemoteFetchUrls(folderPath)
           if (remoteUrls.length === 0) {
             vscode.window.showErrorMessage(
-              `No Git remotes found in the folder containing the active file.`,
+              `No Git remotes found in the folder for ${filePath}.`,
             )
             return
           }
@@ -247,25 +310,11 @@ export function registerSubmissionCommands(
             ignoreFocusOut: true,
           })
 
-          if (!selectedRepo) return // User cancelled
-
+          if (!selectedRepo) return
           if (selectedRepo !== 'Use code from Current File instead') {
-            codeToSubmit = selectedRepo // Submit the URL
+            codeToSubmitForOJ = selectedRepo // Submit the URL
           }
-          // else: keep codeToSubmit as fileContent (though OJ might ignore it for 'git' type)
-        }
-
-        // --- Add/Update Problem ID Comment ---
-        // Do this *before* confirmation? Or after? Let's do it before.
-        if (selectedLanguage !== 'git') {
-          // Don't add comment for git submissions
-          await workspaceService.ensureDocumentHasProblemIdComment(
-            document,
-            problemId,
-            fileLanguageId,
-          )
-          // Refetch content in case comment was added/changed
-          codeToSubmit = document.getText()
+          // else: codeToSubmitForOJ remains what it was (initialFileContent if hooks were skipped)
         }
 
         // --- Confirmation ---
@@ -284,23 +333,19 @@ export function registerSubmissionCommands(
           },
           async () => {
             try {
-              // Save the file before submitting? Good practice.
-              await workspaceService.saveActiveDocument()
-
               const result = await submissionService.submitCode(
                 problemId!,
                 selectedLanguage,
-                codeToSubmit,
+                codeToSubmitForOJ, // Use the final determined code
               )
               vscode.window.showInformationMessage(
                 `Successfully submitted P${problemId}. Submission ID: ${result.id}`,
               )
               submissionMonitor.addSubmission(result.id)
+              submissionProvider.refresh()
             } catch (error: unknown) {
               let message = 'Unknown error'
-              if (error instanceof Error) {
-                message = error.message
-              }
+              if (error instanceof Error) message = error.message
               vscode.window.showErrorMessage(
                 `Submission failed for P${problemId}: ${message}`,
               )

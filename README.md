@@ -22,6 +22,7 @@ This extension allows you to browse problemsets (contests/homework), view proble
 - **Code Submission:** Submit code directly from your active editor using the `ACMOJ: Submit Current File` command (available in Command Palette and editor title bar).
 - **Submission Tracking:** View your recent submissions in a dedicated Tree View, including status, language, and time. Status icons provide quick feedback.
 - **Result Details:** Click on a submission to view detailed results, resource usage, judge messages, and your submitted code in a Webview.
+- **Pre-Submit Hooks:** Fully automate the submission process by setting up pre-submit hooks to run tests or format code before submission.
 
 ## Screenshots
 
@@ -71,6 +72,77 @@ Problemset Tree View with joined contests and homework assignments.
 6.  **Checking Submissions:**
     - The "My Submissions" view shows your recent submissions.
     - Click a submission to see its detailed results and code.
+
+## Advanced Usage
+
+This section is for advanced users who want to unleash the full power of the ACMOJ extension.
+
+### Pre-Submit Hooks
+
+A pre-submit hook is a series of steps taken to modify or validate your code before submission. To create a pre-submit hook, create this file: `(project_root)/.acmoj/pre-submit.json`.
+
+The file should be a json list, each entry (called 'step') is one of the following types:
+
+- `command`: A shell command to execute. Please fill in the `content` field with the command to run.
+- `script`: A script to execute. Please fill in the `path` field with the script to run.
+- `action`: A registered vscode action to execute. Please fill in the `name` field with the command-id to run.
+
+For the first two types, by default no input is provided. Instead, variables will be used to specify the active code file to submit. Here is a list of available variables:
+
+- `${ACMOJ_FILE_PATH}`: The absolute path of the active code file.
+- `${ACMOJ_FILE_NAME}`: The name of the active code file.
+- `${ACMOJ_FILE_NAME_NO_SUFFIX}`: The name of the active code file without its extension suffix.
+- `${ACMOJ_FILE_DIR}`: The directory of the active code file.
+- `${ACMOJ_FILE_CONTENT}`: The content of the active code file.
+  The variables are updated before each step is executed, but will not be updated during the execution of the step.
+
+You can also specify a `output` field for the first two types. Recognized values are:
+
+- `ignore`: (default) Ignore the output of the step.
+- `show`: Print stdout and stderr with notifications inside vscode.
+- `submit`: Use the output of the step for submission. If multiple steps are marked as `submit`, their outputs will be concatenated.
+- `pipe`: The output of the step will be passed to the next step as input.
+
+The base route for the `path` field of scripts is the project root. You are encouraged to use a `description` field to provide a human-readable description of each step.
+
+Example hook:
+
+```json
+[
+  {
+    "type": "action",
+    "name": "editor.action.formatDocument",
+    "description": "Format the current document"
+  },
+  {
+    "type": "command",
+    "content": "mango build ${ACMOJ_FILE_PATH}",
+    "description": "Build into single file and place under dist/ (user-defined command)"
+  },
+  {
+    "type": "script",
+    "path": ".acmoj/safeguard.sh",
+    "description": "Compilation safeguard",
+    "output": "show"
+  },
+  {
+    "type": "command",
+    "content": "cat ${ACMOJ_FILE_DIR}/dist/${ACMOJ_FILE_NAME}",
+    "output": "submit"
+  }
+]
+```
+
+With safeguard.sh placed in the `.acmoj` directory:
+
+```bash
+#! /bin/bash
+
+set -e  # Exit immediately if a command exits with a non-zero status
+g++ ${ACMOJ_FILE_DIR}/dist/${ACMOJ_FILE_NAME} -std=c++23 -o ${ACMOJ_FILE_DIR}/dist/${ACMOJ_FILE_NAME}.build
+rm ${ACMOJ_FILE_DIR}/dist/${ACMOJ_FILE_NAME}.build
+echo "Safeguard passed."
+```
 
 ## Extension Settings
 

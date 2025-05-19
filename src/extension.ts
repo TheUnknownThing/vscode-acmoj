@@ -98,7 +98,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // --- Register Dedicated Refresh Commands (Simpler than passing providers everywhere) ---
   context.subscriptions.push(
-    vscode.commands.registerCommand('acmoj.refreshProblemset', () => {
+    vscode.commands.registerCommand('acmoj.refreshProblemsets', () => {
       if (!authService.isLoggedIn()) {
         vscode.window.showWarningMessage('Please login to ACMOJ first.')
         return
