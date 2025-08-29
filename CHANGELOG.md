@@ -255,3 +255,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Missing 's' in `acmoj.refreshProblemsets` in command registration.
+
+## [0.6.1] - 2025-8-29
+
+### Fixed
+
+- Fixed the duplicating API Base Url when fetching submission code.

@@ -160,10 +160,6 @@ This extension contributes the following settings (accessible via `File > Prefer
 - Error handling can be improved for edge cases.
 - API rate limits may affect viewing problemsets or submissions. **(Major Issue)** Now, we use a cache to store the problemset and submission data for 15 minutes. This should help reduce the number of API calls and avoid rate limits.
 
-## TODO
-
-- Add support for submitting file in the problem view.
-
 ## Contributing
 
 Contributions are welcome! Please feel free to open an issue or submit a pull request on the [GitHub Repo](https://github.com/theunknownthing/vscode-acmoj).

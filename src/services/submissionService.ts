@@ -1,4 +1,5 @@
 import * as querystring from 'querystring'
+import * as vscode from 'vscode'
 import { ApiClient } from '../core/api'
 import { CacheService } from './cacheService'
 import { SubmissionBrief, Submission } from '../types'
@@ -154,14 +155,36 @@ export class SubmissionService {
       throw new Error(`Code URL not available for submission ${submissionId}`)
     }
 
-    const cacheKey = `submission:code:${submissionId}` // Use submission ID for cache key
+    let normalizedUrl = codeUrl
+    try {
+      const config = vscode.workspace.getConfiguration('acmoj')
+      const apiBasePath = config.get<string>(
+        'apiBasePath',
+        '/OnlineJudge/api/v1',
+      )
+
+      if (normalizedUrl.startsWith(apiBasePath)) {
+        normalizedUrl = normalizedUrl.slice(apiBasePath.length)
+      }
+
+      normalizedUrl = normalizedUrl.replace(/^\/+/, '')
+    } catch (e) {
+      console.warn(
+        'Failed to normalize codeUrl, using original value:',
+        codeUrl,
+        e,
+      )
+      normalizedUrl = codeUrl
+    }
+
+    const cacheKey = `submission:code:${submissionId}`
     const ttlMinutes = 60 // Code content is immutable
 
     return this.submissionCodeCache.getOrFetch(
       cacheKey,
       async () => {
         try {
-          const response = await this.apiClient.get<string>(codeUrl, {
+          const response = await this.apiClient.get<string>(normalizedUrl, {
             timeout: 10000, // Separate timeout for code fetching
             responseType: 'text',
           })
