@@ -202,7 +202,11 @@ export class SubmissionProvider
       this.hasNextPage = Boolean(this.nextPageCursor)
 
       // Add submission items directly as top-level nodes
-      result.push(...submissions.map((s) => new SubmissionTreeItem(s)))
+      result.push(
+        ...submissions.map(
+          (s) => new SubmissionTreeItem(s, undefined, this.metadataService),
+        ),
+      )
 
       // Add navigation items at the bottom
       if (this.previousCursors.length > 0 || this.hasNextPage) {
@@ -565,9 +569,11 @@ export class ClearFiltersTreeItem extends vscode.TreeItem {
 }
 
 export class SubmissionTreeItem extends vscode.TreeItem {
+  private metadataService?: OJMetadataService
   constructor(
     public readonly submission: SubmissionBrief,
     errorMessage?: string,
+    metadataService?: OJMetadataService,
   ) {
     if (errorMessage) {
       // For error messages or placeholders
@@ -584,6 +590,8 @@ export class SubmissionTreeItem extends vscode.TreeItem {
       vscode.TreeItemCollapsibleState.None,
     )
 
+    this.metadataService = metadataService
+
     this.description = `${submission.status} (${submission.language}) - ${date}`
     this.tooltip = `Submission ${submission.id}\nStatus: ${submission.status}\nLanguage: ${submission.language}\nTime: ${date}`
 
@@ -596,56 +604,127 @@ export class SubmissionTreeItem extends vscode.TreeItem {
         arguments: [submission.id],
       }
     }
-    this.iconPath = SubmissionTreeItem.getIconForStatus(submission.status)
+    this.iconPath = SubmissionTreeItem.getIconForStatus(
+      submission.status,
+      this.metadataService,
+    )
     this.contextValue = 'submission-item'
   }
+  /**
+   * Map judge status and metadata color to a ThemeIcon.
+   * Falls back to heuristic mapping when metadata unavailable.
+   */
+  private static judgeStatusColorCache: Record<string, string> | null = null
+  private static judgeStatusFetchInFlight = false
 
-  static getIconForStatus(status: SubmissionStatus): vscode.ThemeIcon {
-    switch (status) {
-      case 'accepted':
-        return new vscode.ThemeIcon(
-          'check',
-          new vscode.ThemeColor('testing.iconPassed'),
-        )
-      case 'wrong_answer':
-      case 'runtime_error':
-      case 'bad_problem':
-      case 'unknown_error':
-      case 'system_error':
-        return new vscode.ThemeIcon(
-          'error',
-          new vscode.ThemeColor('testing.iconFailed'),
-        )
-      case 'memory_leak':
-        return new vscode.ThemeIcon(
-          'error',
-          new vscode.ThemeColor('testing.iconErrored'),
-        )
-      case 'compile_error':
-        return new vscode.ThemeIcon(
-          'warning',
-          new vscode.ThemeColor('testing.iconErrored'),
-        )
-      case 'time_limit_exceeded':
-      case 'memory_limit_exceeded':
-      case 'disk_limit_exceeded':
-        return new vscode.ThemeIcon(
-          'clock',
-          new vscode.ThemeColor('testing.iconSkipped'),
-        )
-      case 'pending':
-      case 'compiling':
-      case 'judging':
-        return new vscode.ThemeIcon('sync~spin')
-      case 'aborted':
-      case 'void':
-      case 'skipped':
-        return new vscode.ThemeIcon(
-          'circle-slash',
-          new vscode.ThemeColor('testing.iconSkipped'),
-        )
-      default:
-        return new vscode.ThemeIcon('question')
+  static getIconForStatus(
+    status: SubmissionStatus,
+    metadataService?: OJMetadataService,
+  ): vscode.ThemeIcon {
+    const base = status.toLowerCase()
+    let color: vscode.ThemeColor | undefined
+    let iconId = 'question'
+
+    // Heuristic defaults
+    const heuristic = () => {
+      switch (base) {
+        case 'accepted':
+          color = new vscode.ThemeColor('testing.iconPassed')
+          iconId = 'check'
+          return
+        case 'wrong_answer':
+        case 'runtime_error':
+        case 'bad_problem':
+        case 'unknown_error':
+        case 'system_error':
+          color = new vscode.ThemeColor('testing.iconFailed')
+          iconId = 'error'
+          return
+        case 'memory_leak':
+        case 'compile_error':
+          color = new vscode.ThemeColor('testing.iconErrored')
+          iconId = base === 'compile_error' ? 'warning' : 'error'
+          return
+        case 'time_limit_exceeded':
+        case 'memory_limit_exceeded':
+        case 'disk_limit_exceeded':
+          color = new vscode.ThemeColor('testing.iconSkipped')
+          iconId = 'clock'
+          return
+        case 'pending':
+        case 'compiling':
+        case 'judging':
+          iconId = 'sync~spin'
+          return
+        case 'aborted':
+        case 'void':
+        case 'skipped':
+          color = new vscode.ThemeColor('testing.iconSkipped')
+          iconId = 'circle-slash'
+          return
+        default:
+          iconId = 'question'
+      }
     }
+
+    const applyMetadataColor = (rawColor?: string) => {
+      if (!rawColor) return
+      const c = rawColor.toLowerCase()
+      // Map common / bootstrap colors to ThemeColor tokens
+      const map: Record<string, vscode.ThemeColor> = {
+        success: new vscode.ThemeColor('testing.iconPassed'),
+        green: new vscode.ThemeColor('testing.iconPassed'),
+        danger: new vscode.ThemeColor('testing.iconFailed'),
+        red: new vscode.ThemeColor('testing.iconFailed'),
+        warning: new vscode.ThemeColor('testing.iconErrored'),
+        yellow: new vscode.ThemeColor('testing.iconErrored'),
+        info: new vscode.ThemeColor('editorInfo.foreground'),
+        primary: new vscode.ThemeColor('editorInfo.foreground'),
+        blue: new vscode.ThemeColor('editorInfo.foreground'),
+        secondary: new vscode.ThemeColor('disabledForeground'),
+        gray: new vscode.ThemeColor('disabledForeground'),
+        light: new vscode.ThemeColor('editorHint.foreground'),
+        dark: new vscode.ThemeColor('editor.foreground'),
+      }
+      color = map[c] || color
+    }
+
+    if (!metadataService) {
+      console.error('No metadata service available for status color mapping.')
+      heuristic()
+      return color
+        ? new vscode.ThemeIcon(iconId, color)
+        : new vscode.ThemeIcon(iconId)
+    }
+
+    // Use cached colors if available
+    if (SubmissionTreeItem.judgeStatusColorCache) {
+      const raw = SubmissionTreeItem.judgeStatusColorCache[base]
+      if (raw) applyMetadataColor(raw)
+    } else if (!SubmissionTreeItem.judgeStatusFetchInFlight) {
+      SubmissionTreeItem.judgeStatusFetchInFlight = true
+      metadataService
+        .getJudgeStatusInfo()
+        .then((info) => {
+          const cache: Record<string, string> = {}
+          for (const [k, v] of Object.entries(info)) cache[k] = v.color
+          SubmissionTreeItem.judgeStatusColorCache = cache
+          SubmissionTreeItem.judgeStatusFetchInFlight = false
+          // Trigger a refresh so new colors apply
+          vscode.commands.executeCommand('acmoj.refreshSubmissions')
+        })
+        .catch(() => {
+          SubmissionTreeItem.judgeStatusFetchInFlight = false
+        })
+    }
+
+    // Use metadata synchronously if already cached inside service
+    heuristic()
+    if (!color && SubmissionTreeItem.judgeStatusColorCache) {
+      applyMetadataColor(SubmissionTreeItem.judgeStatusColorCache[base])
+    }
+    return color
+      ? new vscode.ThemeIcon(iconId, color)
+      : new vscode.ThemeIcon(iconId)
   }
 }
