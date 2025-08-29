@@ -1,5 +1,11 @@
 import * as vscode from 'vscode'
-import { SubmissionBrief, SubmissionStatus } from '../types'
+import {
+  SubmissionBrief,
+  SubmissionStatus,
+  JudgeStatusInfo,
+  LanguageInfo,
+} from '../types'
+import { OJMetadataService } from '../services/OJMetadataService'
 import { AuthService } from '../core/auth'
 import { SubmissionService } from '../services/submissionService'
 
@@ -37,6 +43,7 @@ export class SubmissionProvider
   constructor(
     private submissionService: SubmissionService,
     private authService: AuthService,
+    private metadataService: OJMetadataService,
   ) {
     authService.onDidChangeLoginStatus(() => this.refresh())
   }
@@ -246,29 +253,58 @@ export class SubmissionProvider
 
   private getFilterOptions(filterType: string): SubmissionViewItem[] {
     if (filterType === 'status') {
-      const statuses = [
-        { label: 'All', value: undefined },
-        { label: 'Accepted', value: 'accepted' },
-        { label: 'Wrong Answer', value: 'wrong_answer' },
-        { label: 'Compile Error', value: 'compile_error' },
-        { label: 'Time Limit Exceeded', value: 'time_limit_exceeded' },
-        { label: 'Memory Limit Exceeded', value: 'memory_limit_exceeded' },
-        { label: 'Memory Leak', value: 'memory_leak' },
-        { label: 'Disk Limit Exceeded', value: 'disk_limit_exceeded' },
-        { label: 'Runtime Error', value: 'runtime_error' },
-        { label: 'Pending', value: 'pending' },
-        { label: 'Judging', value: 'judging' },
+      let statusEntries: Array<{ key: string; label: string }> = []
+      try {
+        // We cannot await here; metadata service caches internally but requires async.
+        // Instead, schedule refresh if not loaded.
+        statusEntries = [
+          { key: 'accepted', label: 'Accepted' },
+          { key: 'wrong_answer', label: 'Wrong Answer' },
+          { key: 'compile_error', label: 'Compile Error' },
+          { key: 'time_limit_exceeded', label: 'Time Limit Exceeded' },
+          { key: 'memory_limit_exceeded', label: 'Memory Limit Exceeded' },
+          { key: 'memory_leak', label: 'Memory Leak' },
+          { key: 'disk_limit_exceeded', label: 'Disk Limit Exceeded' },
+          { key: 'runtime_error', label: 'Runtime Error' },
+          { key: 'pending', label: 'Pending' },
+          { key: 'judging', label: 'Judging' },
+        ]
+        // Fire async fetch
+        this.metadataService
+          .getJudgeStatusInfo()
+          .then((info: JudgeStatusInfo) => {
+            const dynamic = Object.entries(info).map(([key, detail]) => ({
+              key,
+              label: detail.name || key,
+            }))
+            // Only refresh if changed size (avoid loops)
+            if (dynamic.length !== statusEntries.length) {
+              this._onDidChangeTreeData.fire()
+            }
+            statusEntries = dynamic
+          })
+          .catch(() => {})
+      } catch (_) {
+        // ignore
+      }
+      const items = [
+        new FilterOptionTreeItem(
+          'All',
+          'status',
+          undefined,
+          this.statusFilter === undefined,
+        ),
+        ...statusEntries.map(
+          (s) =>
+            new FilterOptionTreeItem(
+              s.label,
+              'status',
+              s.key,
+              this.statusFilter === s.key,
+            ),
+        ),
       ]
-
-      return statuses.map(
-        (status) =>
-          new FilterOptionTreeItem(
-            status.label,
-            'status',
-            status.value,
-            this.statusFilter === status.value,
-          ),
-      )
+      return items
     } else if (filterType === 'problemId') {
       const options: { label: string; value: undefined | number | 'custom' }[] =
         [{ label: 'All Problems', value: undefined }]
@@ -294,23 +330,47 @@ export class SubmissionProvider
           ),
       )
     } else if (filterType === 'language') {
-      const languages = [
-        { label: 'All', value: undefined },
-        { label: 'C++', value: 'cpp' },
-        { label: 'Python', value: 'python' },
-        { label: 'Git', value: 'git' },
-        { label: 'Verilog', value: 'verilog' },
+      let languageEntries: Array<{ key: string; label: string }> = []
+      try {
+        languageEntries = [
+          { key: 'cpp', label: 'C++' },
+          { key: 'python', label: 'Python' },
+          { key: 'git', label: 'Git' },
+          { key: 'verilog', label: 'Verilog' },
+        ]
+        this.metadataService
+          .getLanguageInfo()
+          .then((info: LanguageInfo) => {
+            const dynamic = Object.entries(info).map(([key, detail]) => ({
+              key,
+              label: detail.name || key,
+            }))
+            if (dynamic.length !== languageEntries.length) {
+              this._onDidChangeTreeData.fire()
+            }
+            languageEntries = dynamic
+          })
+          .catch(() => {})
+      } catch (_) {
+        // ignore metadata fetch error, fallback already in place
+      }
+      return [
+        new FilterOptionTreeItem(
+          'All',
+          'language',
+          undefined,
+          this.languageFilter === undefined,
+        ),
+        ...languageEntries.map(
+          (l) =>
+            new FilterOptionTreeItem(
+              l.label,
+              'language',
+              l.key,
+              this.languageFilter === l.key,
+            ),
+        ),
       ]
-
-      return languages.map(
-        (language) =>
-          new FilterOptionTreeItem(
-            language.label,
-            'language',
-            language.value,
-            this.languageFilter === language.value,
-          ),
-      )
     }
 
     return []
