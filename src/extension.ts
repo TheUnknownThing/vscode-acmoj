@@ -11,6 +11,7 @@ import { SubmissionProvider } from './views/submissionProvider'
 import { registerCommands } from './commands'
 import { SubmissionMonitorService } from './services/submissionMonitorService'
 import { Profile } from './types'
+import { OJMetadataService } from './services/OJMetadataService'
 
 let authService: AuthService
 let apiClient: ApiClient
@@ -22,6 +23,7 @@ let workspaceService: WorkspaceService
 let submissionMonitor: SubmissionMonitorService
 let problemsetProvider: ProblemsetProvider
 let submissionProvider: SubmissionProvider
+let metadataService: OJMetadataService
 
 let statusBarItem: vscode.StatusBarItem
 
@@ -36,10 +38,15 @@ export async function activate(context: vscode.ExtensionContext) {
   problemsetService = new ProblemsetService(apiClient)
   userService = new UserService(apiClient)
   workspaceService = new WorkspaceService()
+  metadataService = new OJMetadataService(apiClient)
 
   // --- View Provider Registration ---
   problemsetProvider = new ProblemsetProvider(problemsetService, authService)
-  submissionProvider = new SubmissionProvider(submissionService, authService)
+  submissionProvider = new SubmissionProvider(
+    submissionService,
+    authService,
+    metadataService,
+  )
 
   submissionMonitor = new SubmissionMonitorService(
     submissionService,
@@ -94,6 +101,7 @@ export async function activate(context: vscode.ExtensionContext) {
     submissionMonitor,
     problemsetProvider,
     submissionProvider,
+    metadataService,
   )
 
   // --- Register Dedicated Refresh Commands (Simpler than passing providers everywhere) ---

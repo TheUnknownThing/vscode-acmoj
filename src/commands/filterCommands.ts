@@ -1,11 +1,14 @@
 import * as vscode from 'vscode'
 import { AuthService } from '../core/auth'
 import { SubmissionProvider } from '../views/submissionProvider'
+import { OJMetadataService } from '../services/OJMetadataService'
+import { JudgeStatusInfo, LanguageInfo } from '../types'
 
 export function registerFilterCommands(
   context: vscode.ExtensionContext,
   authService: AuthService,
   submissionProvider: SubmissionProvider, // Inject provider directly
+  metadataService: OJMetadataService,
 ) {
   // --- Direct Filter Setters ---
   context.subscriptions.push(
@@ -110,36 +113,48 @@ export function registerFilterCommands(
 
         switch (filterType) {
           case 'status': {
-            const statusOptions = [
-              { label: 'All', value: undefined },
-              { label: 'Accepted', value: 'accepted' },
-              { label: 'Wrong Answer', value: 'wrong_answer' },
-              { label: 'Compile Error', value: 'compile_error' },
-              { label: 'Time Limit Exceeded', value: 'time_limit_exceeded' },
-              {
-                label: 'Memory Limit Exceeded',
-                value: 'memory_limit_exceeded',
-              },
-              { label: 'Memory Leak', value: 'memory_leak' },
-              { label: 'Disk Limit Exceeded', value: 'disk_limit_exceeded' },
-              { label: 'Runtime Error', value: 'runtime_error' },
-              { label: 'Pending', value: 'pending' },
-              { label: 'Judging', value: 'judging' },
+            // Fallback list
+            let statusEntries: Array<{ key: string; label: string }> = [
+              { key: 'accepted', label: 'Accepted' },
+              { key: 'wrong_answer', label: 'Wrong Answer' },
+              { key: 'compile_error', label: 'Compile Error' },
+              { key: 'time_limit_exceeded', label: 'Time Limit Exceeded' },
+              { key: 'memory_limit_exceeded', label: 'Memory Limit Exceeded' },
+              { key: 'memory_leak', label: 'Memory Leak' },
+              { key: 'disk_limit_exceeded', label: 'Disk Limit Exceeded' },
+              { key: 'runtime_error', label: 'Runtime Error' },
+              { key: 'pending', label: 'Pending' },
+              { key: 'judging', label: 'Judging' },
             ]
-
+            try {
+              const info: JudgeStatusInfo =
+                await metadataService.getJudgeStatusInfo()
+              statusEntries = Object.entries(info).map(([k, v]) => ({
+                key: k,
+                label: v.name || k,
+              }))
+            } catch (_) {
+              // ignore, fallback is used
+            }
             const statusSelection = await vscode.window.showQuickPick(
-              statusOptions.map((o) => o.label),
+              ['All', ...statusEntries.map((o) => o.label)],
               { placeHolder: 'Select status filter' },
             )
-
-            if (statusSelection) {
-              const selectedOption = statusOptions.find(
-                (o) => o.label === statusSelection,
-              )
-              vscode.commands.executeCommand(
-                'acmoj.setStatusFilter',
-                selectedOption?.value,
-              )
+            if (statusSelection !== undefined) {
+              if (statusSelection === 'All') {
+                vscode.commands.executeCommand(
+                  'acmoj.setStatusFilter',
+                  undefined,
+                )
+              } else {
+                const selected = statusEntries.find(
+                  (o) => o.label === statusSelection,
+                )
+                vscode.commands.executeCommand(
+                  'acmoj.setStatusFilter',
+                  selected?.key,
+                )
+              }
             }
             break
           }
@@ -150,27 +165,40 @@ export function registerFilterCommands(
           }
 
           case 'language': {
-            const languageOptions = [
-              { label: 'All', value: undefined },
-              { label: 'C++', value: 'cpp' },
-              { label: 'Python', value: 'python' },
-              { label: 'Git', value: 'git' },
-              { label: 'Verilog', value: 'verilog' },
+            let languageEntries: Array<{ key: string; label: string }> = [
+              { key: 'cpp', label: 'C++' },
+              { key: 'python', label: 'Python' },
+              { key: 'git', label: 'Git' },
+              { key: 'verilog', label: 'Verilog' },
             ]
-
+            try {
+              const info: LanguageInfo = await metadataService.getLanguageInfo()
+              languageEntries = Object.entries(info).map(([k, v]) => ({
+                key: k,
+                label: v.name || k,
+              }))
+            } catch (_) {
+              // ignore
+            }
             const langSelection = await vscode.window.showQuickPick(
-              languageOptions.map((o) => o.label),
+              ['All', ...languageEntries.map((o) => o.label)],
               { placeHolder: 'Select language filter' },
             )
-
-            if (langSelection) {
-              const selectedOption = languageOptions.find(
-                (o) => o.label === langSelection,
-              )
-              vscode.commands.executeCommand(
-                'acmoj.setLanguageFilter',
-                selectedOption?.value,
-              )
+            if (langSelection !== undefined) {
+              if (langSelection === 'All') {
+                vscode.commands.executeCommand(
+                  'acmoj.setLanguageFilter',
+                  undefined,
+                )
+              } else {
+                const selected = languageEntries.find(
+                  (o) => o.label === langSelection,
+                )
+                vscode.commands.executeCommand(
+                  'acmoj.setLanguageFilter',
+                  selected?.key,
+                )
+              }
             }
             break
           }

@@ -250,11 +250,9 @@ export class WorkspaceService {
       java: 'java',
       python: 'python',
       verilog: 'verilog',
-      javascript: 'javascript',
+      git: 'plaintext',
     }
     let potentialMatch: string | undefined = directMap[lowerId]
-    if (lowerId === 'plaintext' && availableLangs.includes('git'))
-      potentialMatch = 'git'
     if (potentialMatch && availableLangs.includes(potentialMatch))
       return potentialMatch
     if (availableLangs.includes(lowerId)) return lowerId

@@ -7,6 +7,7 @@ import { WorkspaceService } from '../services/workspaceService'
 import { SubmissionMonitorService } from '../services/submissionMonitorService'
 import { ProblemsetProvider } from '../views/problemsetProvider'
 import { SubmissionProvider } from '../views/submissionProvider'
+import { OJMetadataService } from '../services/OJMetadataService'
 
 // Import command handlers
 import { registerAuthCommands } from './authCommands'
@@ -24,6 +25,7 @@ export function registerCommands(
   submissionMonitor: SubmissionMonitorService,
   problemsetProvider: ProblemsetProvider,
   submissionProvider: SubmissionProvider,
+  metadataService: OJMetadataService,
 ) {
   // Register commands from different modules
   registerAuthCommands(
@@ -43,7 +45,12 @@ export function registerCommands(
     submissionMonitor,
     submissionProvider,
   )
-  registerFilterCommands(context, authService, submissionProvider) // Pass provider for filters/pagination
+  registerFilterCommands(
+    context,
+    authService,
+    submissionProvider,
+    metadataService,
+  ) // Pass provider for filters/pagination
 
   // Note: Refresh commands and clearCache are registered directly in extension.ts
 }
