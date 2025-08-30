@@ -21,7 +21,7 @@ export interface Problem {
   example_input: string | null // old version example
   example_output: string | null // old version example
   data_range: string | null
-  languages_accepted: string[] | null
+  languages_accepted: Array<string> | null
   // TODO: ... more fields, I do not care about it now
 }
 

@@ -121,7 +121,6 @@ export class WorkspaceService {
     const langCommentMap: Record<string, string> = {
       cpp: '//',
       python: '#',
-      java: '//',
       verilog: '//',
     }
     const commentPrefix = langCommentMap[languageId.toLowerCase()]
@@ -247,7 +246,6 @@ export class WorkspaceService {
     const directMap: Record<string, string> = {
       cpp: 'cpp',
       c: 'cpp',
-      java: 'java',
       python: 'python',
       verilog: 'verilog',
       git: 'plaintext',

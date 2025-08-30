@@ -160,13 +160,7 @@ export function registerSubmissionCommands(
           problemId = parseInt(problemIdStr, 10)
         }
 
-        let availableLanguages: string[] = [
-          'cpp',
-          'python',
-          'java',
-          'git',
-          'verilog',
-        ]
+        let availableLanguages: string[] = ['cpp', 'python', 'git', 'verilog']
         try {
           const problemDetails =
             await problemService.getProblemDetails(problemId)
