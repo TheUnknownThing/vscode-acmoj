@@ -7,6 +7,7 @@ import { WorkspaceService, PreSubmitResult } from '../services/workspaceService'
 import { SubmissionMonitorService } from '../services/submissionMonitorService'
 import { SubmissionDetailPanel } from '../webviews/submissionDetailPanel'
 import { SubmissionProvider } from '../views/submissionProvider'
+import { OJMetadataService } from '../services/OJMetadataService'
 
 export function registerSubmissionCommands(
   context: vscode.ExtensionContext,
@@ -16,6 +17,7 @@ export function registerSubmissionCommands(
   workspaceService: WorkspaceService,
   submissionMonitor: SubmissionMonitorService,
   submissionProvider: SubmissionProvider,
+  metadataService: OJMetadataService,
 ) {
   context.subscriptions.push(
     vscode.commands.registerCommand(
@@ -178,10 +180,22 @@ export function registerSubmissionCommands(
           )
         }
 
-        const mappedLanguage = workspaceService.mapLanguageIdToOJFormat(
+        let mappedLanguage = workspaceService.mapLanguageIdToOJFormat(
           fileLanguageId,
           availableLanguages,
         )
+        if (!mappedLanguage) {
+          try {
+            const langInfo = await metadataService.getLanguageInfo()
+            mappedLanguage = workspaceService.mapDocumentToOJLanguage(
+              document,
+              availableLanguages,
+              langInfo,
+            )
+          } catch (_) {
+            // ignore metadata fetch failure
+          }
+        }
         const languageItems: vscode.QuickPickItem[] = availableLanguages.map(
           (lang) => ({
             label: lang,

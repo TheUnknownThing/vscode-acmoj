@@ -248,13 +248,36 @@ export class WorkspaceService {
       c: 'cpp',
       python: 'python',
       verilog: 'verilog',
-      git: 'plaintext',
+      plaintext: 'git',
     }
     let potentialMatch: string | undefined = directMap[lowerId]
     if (potentialMatch && availableLangs.includes(potentialMatch))
       return potentialMatch
     if (availableLangs.includes(lowerId)) return lowerId
     for (const lang of availableLangs) if (lang.startsWith(lowerId)) return lang
+    return undefined
+  }
+
+  /**
+   * Enhanced mapping using file extension & language metadata.
+   */
+  mapDocumentToOJLanguage(
+    document: vscode.TextDocument,
+    availableLangs: string[],
+    languageInfo?: import('../types').LanguageInfo,
+  ): string | undefined {
+    const primary = this.mapLanguageIdToOJFormat(
+      document.languageId,
+      availableLangs,
+    )
+    if (primary) return primary
+    if (!languageInfo) return undefined
+    const ext = path.extname(document.fileName).replace(/^\./, '').toLowerCase()
+    if (!ext) return undefined
+    for (const [key, detail] of Object.entries(languageInfo)) {
+      if (!availableLangs.includes(key)) continue
+      if (detail.extension && detail.extension.toLowerCase() === ext) return key
+    }
     return undefined
   }
 

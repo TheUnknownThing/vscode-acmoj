@@ -44,6 +44,7 @@ export function registerCommands(
     workspaceService,
     submissionMonitor,
     submissionProvider,
+    metadataService,
   )
   registerFilterCommands(
     context,

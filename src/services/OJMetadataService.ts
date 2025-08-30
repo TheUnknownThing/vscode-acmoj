@@ -1,3 +1,4 @@
+import * as vscode from 'vscode'
 import { ApiClient } from '../core/api'
 import { CacheService } from './cacheService'
 import { JudgeStatusInfo, LanguageInfo, Runner } from '../types'
@@ -11,6 +12,9 @@ export class OJMetadataService {
   private judgeStatusCache: CacheService<JudgeStatusInfo>
   private languageInfoCache: CacheService<LanguageInfo>
   private RunnerCache: CacheService<Runner[]>
+  private latestJudgeStatusInfo: JudgeStatusInfo | undefined
+  private _onDidUpdateJudgeStatusInfo = new vscode.EventEmitter<void>()
+  readonly onDidUpdateJudgeStatusInfo = this._onDidUpdateJudgeStatusInfo.event
 
   // Cache keys
   private static readonly JUDGE_STATUS_CACHE_KEY = 'meta:info:judge-status'
@@ -37,8 +41,18 @@ export class OJMetadataService {
     return this.judgeStatusCache.getOrFetch(
       OJMetadataService.JUDGE_STATUS_CACHE_KEY,
       async () => {
-        // The API returns the object directly
-        return this.apiClient.get<JudgeStatusInfo>('/meta/info/judge-status')
+        const fresh = await this.apiClient.get<JudgeStatusInfo>(
+          '/meta/info/judge-status',
+        )
+        const changed =
+          !this.latestJudgeStatusInfo ||
+          Object.keys(this.latestJudgeStatusInfo).length !==
+            Object.keys(fresh).length
+        this.latestJudgeStatusInfo = fresh
+        if (changed) {
+          this._onDidUpdateJudgeStatusInfo.fire()
+        }
+        return fresh
       },
       OJMetadataService.METADATA_TTL_MINUTES,
     )
@@ -107,5 +121,12 @@ export class OJMetadataService {
     this.languageInfoCache.clear()
     this.RunnerCache.clear()
     console.log('All OJ metadata caches cleared.')
+  }
+
+  /**
+   * Returns the most recently fetched judge status info if available (no fetch).
+   */
+  peekJudgeStatusInfo(): JudgeStatusInfo | undefined {
+    return this.latestJudgeStatusInfo
   }
 }

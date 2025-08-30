@@ -46,6 +46,7 @@ export class SubmissionProvider
     private metadataService: OJMetadataService,
   ) {
     authService.onDidChangeLoginStatus(() => this.refresh())
+    this.metadataService.onDidUpdateJudgeStatusInfo(() => this.refresh())
   }
 
   refresh(): void {
@@ -710,8 +711,7 @@ export class SubmissionTreeItem extends vscode.TreeItem {
           for (const [k, v] of Object.entries(info)) cache[k] = v.color
           SubmissionTreeItem.judgeStatusColorCache = cache
           SubmissionTreeItem.judgeStatusFetchInFlight = false
-          // Trigger a refresh so new colors apply
-          vscode.commands.executeCommand('acmoj.refreshSubmissions')
+          // Provider subscribed to metadata updates; no explicit command needed
         })
         .catch(() => {
           SubmissionTreeItem.judgeStatusFetchInFlight = false
