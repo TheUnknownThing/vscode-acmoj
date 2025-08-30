@@ -261,3 +261,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed the duplicating API Base Url when fetching submission code.
+
+## [0.6.2] - 2025-8-30
+
+### Fixed
+
+- Fixed the issue where `plaintext` is not recognized as git.
+
+- Fixed the submission problem id extracting logic. The previous one failed when extracting from the first line of the file content.
+
+- Removed some unused languages of OJ.
