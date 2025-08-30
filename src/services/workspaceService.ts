@@ -151,7 +151,7 @@ export class WorkspaceService {
 
   extractProblemIdFromText(text: string): number | undefined {
     const firstLine = text.split('\n', 1)[0].trim()
-    const match = firstLine.match(/(?:\/\/|#)\s*acmoj:s*(\d+)/)
+    const match = firstLine.match(/(?:\/\/|#)\s*acmoj:\s*(\d+)/)
     return match && match[1] ? parseInt(match[1], 10) : undefined
   }
 
