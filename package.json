@@ -2,7 +2,7 @@
   "name": "vscode-acmoj",
   "displayName": "ACMOJ Helper",
   "description": "View problems, submit code, and check results for ACMOJ.",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "publisher": "TheUnknownThing",
   "contributors": [
     {
@@ -194,6 +194,11 @@
           "type": "number",
           "default": 120000,
           "description": "Maximum time in milliseconds to monitor a submission before timing out."
+        },
+        "acmoj.attachments.downloadLocationMode": {
+          "type": "string",
+          "default": "workspace",
+          "description": "How to handle attachment downloads. Options: `workspace` (download to workspace `.acmoj/problem-{id}/` folder) or `ask` (prompt for location each time). Default: `workspace`"
         }
       }
     }

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import { AuthService } from '../core/auth'
+import { ApiClient } from '../core/api'
 import { ProblemService } from '../services/problemService'
 import { SubmissionService } from '../services/submissionService'
 import { UserService } from '../services/userService'
@@ -18,6 +19,7 @@ import { registerFilterCommands } from './filterCommands'
 export function registerCommands(
   context: vscode.ExtensionContext,
   authService: AuthService,
+  apiClient: ApiClient,
   problemService: ProblemService,
   submissionService: SubmissionService,
   userService: UserService,
@@ -35,7 +37,7 @@ export function registerCommands(
     problemsetProvider,
     submissionProvider,
   )
-  registerProblemCommands(context, authService, problemService)
+  registerProblemCommands(context, authService, problemService, apiClient)
   registerSubmissionCommands(
     context,
     authService,

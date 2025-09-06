@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import { AuthService } from '../core/auth'
+import { ApiClient } from '../core/api'
 import { ProblemService } from '../services/problemService'
 import { ProblemDetailPanel } from '../webviews/problemDetailPanel'
 
@@ -7,6 +8,7 @@ export function registerProblemCommands(
   context: vscode.ExtensionContext,
   authService: AuthService,
   problemService: ProblemService,
+  apiClient: ApiClient,
 ) {
   context.subscriptions.push(
     vscode.commands.registerCommand('acmoj.viewProblemById', async () => {
@@ -43,6 +45,7 @@ export function registerProblemCommands(
             context.extensionUri,
             problemId,
             problemService,
+            apiClient,
           )
         } catch (error: unknown) {
           let message = 'Unknown error'
