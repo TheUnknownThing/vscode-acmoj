@@ -105,7 +105,12 @@ export class ProblemDetailPanel extends BasePanel {
       message !== null &&
       'command' in message
     ) {
-      const msg = message as { command: string; content?: string }
+      const msg = message as {
+        command: string
+        content?: string
+        name?: string
+        url?: string
+      }
       switch (msg.command) {
         case 'copyToTerminal':
           vscode.commands.executeCommand('acmoj.copyToTerminal', msg.content)
@@ -124,7 +129,15 @@ export class ProblemDetailPanel extends BasePanel {
           )
           return
 
-        // TODO: I'll add submitFromProblemView here later
+        case 'downloadAttachment':
+          if (msg.name && msg.url) {
+            this.downloadAttachment(msg.name, msg.url).catch((err) =>
+              vscode.window.showErrorMessage(
+                `Download failed: ${err instanceof Error ? err.message : String(err)}`,
+              ),
+            )
+          }
+          return
       }
     }
   }
@@ -142,7 +155,7 @@ export class ProblemDetailPanel extends BasePanel {
         }
       ).attachments ?? null
 
-    // Replace [attachment]filename[/attachment] with anchor tags, then render via Markdown
+    // Replace [attachment]filename[/attachment] with anchor + Download button, then render via Markdown
     const renderWithAttachments = (
       text: string | null | undefined,
       emptyFallbackMd: string,
@@ -155,7 +168,10 @@ export class ProblemDetailPanel extends BasePanel {
           const key = String(name).trim()
           const item = map.get(key)
           if (item) {
-            return `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.name)}</a>`
+            const safeName = escapeHtml(item.name)
+            const safeUrl = escapeHtml(item.url)
+            return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeName}</a>
+              <button class="download-attachment" data-name="${safeName}" data-url="${safeUrl}" title="Download attachment">Download</button>`
           }
           // If not found, show the plain text name
           return escapeHtml(key)
@@ -245,12 +261,15 @@ export class ProblemDetailPanel extends BasePanel {
     const attachmentsSectionHtml =
       attachments && attachments.length > 0
         ? `<ul>${attachments
-            .map(
-              (a) =>
-                `<li><a href="${escapeHtml(a.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(
-                  a.name,
-                )}</a> - ${a.size_bytes} bytes</li>`,
-            )
+            .map((a) => {
+              const safeName = escapeHtml(a.name)
+              const safeUrl = escapeHtml(a.url)
+              return `<li>
+                <a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeName}</a>
+                <button class="download-attachment" data-name="${safeName}" data-url="${safeUrl}" title="Download attachment">⬇ Download</button>
+                - ${a.size_bytes} bytes
+              </li>`
+            })
             .join('')}</ul>`
         : md.render('*No attachments.*')
 
@@ -297,7 +316,7 @@ export class ProblemDetailPanel extends BasePanel {
             <script nonce="${scriptNonce}">
                 const vscode = acquireVsCodeApi();
 
-                // Handle copy buttons
+                // Handle copy / download buttons
                 document.addEventListener('click', function(event) {
                     const target = event.target;
                     if (!target || !target.classList) return;
@@ -317,10 +336,160 @@ export class ProblemDetailPanel extends BasePanel {
                             content: content
                         });
                     }
+
+                    if (target.classList.contains('download-attachment')) {
+                        const name = target.getAttribute('data-name');
+                        const url = target.getAttribute('data-url');
+                        vscode.postMessage({
+                            command: 'downloadAttachment',
+                            name,
+                            url
+                        });
+                    }
                 });
             </script>
         `
 
     return this._getWebviewHtml(content, scriptNonce)
+  }
+
+  // --- Attachment download implementation ---
+
+  private getPreferredDownloadMode(): 'workspace' | 'ask' {
+    const cfg = vscode.workspace.getConfiguration('onlineJudge')
+    const mode =
+      cfg.get<'workspace' | 'ask'>('attachments.downloadLocationMode') ??
+      'workspace'
+    return mode
+  }
+
+  private getWorkspaceDownloadDir(): vscode.Uri | null {
+    const ws = vscode.workspace.workspaceFolders
+    if (!ws || ws.length === 0) return null
+    // {workspace}/.acmoj/problem-{id}
+    return vscode.Uri.joinPath(ws[0].uri, '.acmoj', `problem-${this.problemId}`)
+  }
+
+  private async ensureDir(uri: vscode.Uri): Promise<void> {
+    await vscode.workspace.fs.createDirectory(uri)
+  }
+
+  private async exists(uri: vscode.Uri): Promise<boolean> {
+    try {
+      await vscode.workspace.fs.stat(uri)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  private async uniqueTarget(
+    dir: vscode.Uri,
+    baseName: string,
+  ): Promise<vscode.Uri> {
+    let candidate = vscode.Uri.joinPath(dir, baseName)
+    if (!(await this.exists(candidate))) return candidate
+
+    const dot = baseName.lastIndexOf('.')
+    const stem = dot > 0 ? baseName.slice(0, dot) : baseName
+    const ext = dot > 0 ? baseName.slice(dot) : ''
+    let i = 1
+    // Generate "name (1).ext" style
+    while (await this.exists(candidate)) {
+      candidate = vscode.Uri.joinPath(dir, `${stem} (${i})${ext}`)
+      i++
+    }
+    return candidate
+  }
+
+  private async askTargetFile(): Promise<vscode.Uri | undefined> {
+    return vscode.window.showSaveDialog({
+      saveLabel: 'Save Attachment',
+      filters: { 'All Files': ['*'] },
+      // defaultUri intentionally omitted so the OS picks a sensible default
+    })
+  }
+
+  private async fetchAsUint8Array(
+    url: string,
+    signal?: AbortSignal,
+  ): Promise<Uint8Array> {
+    // Use fetch from the extension host (Node 18+ includes fetch)
+    const res = await fetch(url, { signal })
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} ${res.statusText}`)
+    }
+    const buf = await res.arrayBuffer()
+    return new Uint8Array(buf)
+  }
+
+  private async downloadAttachment(name: string, url: string): Promise<void> {
+    // Determine target based on user setting and workspace availability
+    const mode = this.getPreferredDownloadMode() // 'workspace' | 'ask'
+    let targetFile: vscode.Uri | undefined
+
+    if (mode === 'workspace') {
+      const dir = this.getWorkspaceDownloadDir()
+      if (!dir) {
+        // No workspace — fallback to Ask
+        targetFile = await this.askTargetFile()
+      } else {
+        await this.ensureDir(dir)
+        // Handle conflicts with prompt
+        const candidate = vscode.Uri.joinPath(dir, name)
+        let finalTarget = candidate
+        if (await this.exists(candidate)) {
+          const choice = await vscode.window.showWarningMessage(
+            `File ${name} already exists. What do you want to do?`,
+            'Overwrite',
+            'Keep Both',
+            'Cancel',
+          )
+          if (choice === 'Cancel' || !choice) return
+          if (choice === 'Keep Both') {
+            finalTarget = await this.uniqueTarget(dir, name)
+          }
+          // Overwrite uses candidate as-is
+        }
+        targetFile = finalTarget
+      }
+    } else {
+      targetFile = await this.askTargetFile()
+    }
+
+    if (!targetFile) return
+
+    // Download with progress and cancellable
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Downloading ${name}`,
+        cancellable: true,
+      },
+      async (progress, token) => {
+        progress.report({ message: 'Starting...' })
+
+        // Wire cancellation
+        const controller = new AbortController()
+        token.onCancellationRequested(() => controller.abort())
+
+        // Fetch into memory then write via VS Code FS API
+        const content = await this.fetchAsUint8Array(url, controller.signal)
+        progress.report({ message: 'Saving...' })
+        await vscode.workspace.fs.writeFile(targetFile!, content)
+
+        // Offer actions
+        const action = await vscode.window.showInformationMessage(
+          `Downloaded: ${name}`,
+          'Open File',
+          'Show in Explorer',
+        )
+        if (action === 'Open File') {
+          await vscode.commands.executeCommand('vscode.open', targetFile)
+        } else if (action === 'Show in Explorer') {
+          await vscode.commands.executeCommand('revealInExplorer', targetFile)
+        }
+      },
+    )
   }
 }
