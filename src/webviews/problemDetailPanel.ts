@@ -170,8 +170,10 @@ export class ProblemDetailPanel extends BasePanel {
           if (item) {
             const safeName = escapeHtml(item.name)
             const safeUrl = escapeHtml(item.url)
-            return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeName}</a>
-              <button class="download-attachment" data-name="${safeName}" data-url="${safeUrl}" title="Download attachment">Download</button>`
+            return `<span style="display: inline-flex; align-items: center; gap: 4px;">
+              <a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeName}</a>
+              <button class="download-attachment" data-name="${safeName}" data-url="${safeUrl}" title="Download attachment" style="padding: 2px 4px; font-size: 0.65em; line-height: 1; margin: 0;">⬇</button>
+            </span>`
           }
           // If not found, show the plain text name
           return escapeHtml(key)
@@ -265,9 +267,11 @@ export class ProblemDetailPanel extends BasePanel {
               const safeName = escapeHtml(a.name)
               const safeUrl = escapeHtml(a.url)
               return `<li>
-                <a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeName}</a>
-                <button class="download-attachment" data-name="${safeName}" data-url="${safeUrl}" title="Download attachment">⬇ Download</button>
-                - ${a.size_bytes} bytes
+                <span style="display: inline-flex; align-items: center; gap: 4px;">
+                  <a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeName}</a>
+                  <button class="download-attachment" data-name="${safeName}" data-url="${safeUrl}" title="Download attachment" style="padding: 2px 4px; font-size: 0.65em; line-height: 1; margin: 0;">⬇</button>
+                  - ${a.size_bytes} bytes
+                </span>
               </li>`
             })
             .join('')}</ul>`
