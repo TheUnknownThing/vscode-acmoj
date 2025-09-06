@@ -149,17 +149,8 @@ export class ProblemDetailPanel extends BasePanel {
   }
 
   private _getProblemHtml(problem: Problem): string {
-    // Safely read attachments from problem without depending on Problem type update
-    const attachments =
-      (
-        problem as unknown as {
-          attachments?: Array<{
-            name: string
-            size_bytes: number
-            url: string
-          }> | null
-        }
-      ).attachments ?? null
+    // Directly read attachments from problem (Problem type includes attachments)
+    const attachments = problem.attachments ?? null
 
     // Replace [attachment]filename[/attachment] with anchor + Download button, then render via Markdown
     const renderWithAttachments = (
