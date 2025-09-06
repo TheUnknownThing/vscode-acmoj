@@ -199,6 +199,11 @@
           "type": "string",
           "default": "workspace",
           "description": "How to handle attachment downloads. Options: `workspace` (download to workspace `.acmoj/problem-{id}/` folder) or `ask` (prompt for location each time). Default: `workspace`"
+        },
+        "acmoj.attachments.downloadTimeout": {
+          "type": "number",
+          "default": 60000,
+          "description": "Timeout in milliseconds for attachment downloads."
         }
       }
     }

@@ -161,6 +161,7 @@ This extension contributes the following settings (accessible via `File > Prefer
 - `acmoj.submissionMonitorInterval`: Interval in milliseconds for checking submission status updates. Default: `4000`
 - `acmoj.submissionMonitorTimeout`: Maximum time in milliseconds to monitor a submission before timing out. Default: `120000`
 - `acmoj.attachments.downloadLocationMode`: How to handle attachment downloads. Options: `workspace` (download to workspace `.acmoj/problem-{id}/` folder) or `ask` (prompt for location each time). Default: `workspace`
+- `acmoj.attachments.downloadTimeout`: Timeout in milliseconds for attachment downloads. Default: `60000`
 
 ## Known Issues
 

@@ -438,10 +438,12 @@ export class ProblemDetailPanel extends BasePanel {
       normalizedUrl = url
     }
 
+    const downloadTimeout = vscode.workspace
+      .getConfiguration('acmoj')
+      .get<number>('attachments.downloadTimeout', 60000)
     const response = await this.apiClient.get<ArrayBuffer>(normalizedUrl, {
       responseType: 'arraybuffer',
-      timeout: 60000, // 60s timeout, approx 500MB.
-      // TODO: make timeout a configurable option
+      timeout: downloadTimeout,
       signal,
     })
 
