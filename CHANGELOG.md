@@ -271,3 +271,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed the submission problem id extracting logic. The previous one failed when extracting from the first line of the file content.
 
 - Removed some unused languages of OJ.
+
+## [0.7.0] - 2025-9-6
+
+### Added
+
+- **Attachment Download Support:** Problems with attachments now display download buttons in the problem view.
+  - Secure downloads using authenticated API requests with Bearer token authorization.
+  - Configurable download location: workspace folder (`.acmoj/problem-{id}/`) or custom location via file dialog.
+  - Progress indication with cancellable download notifications.
+  - Automatic file conflict resolution with options to overwrite or keep both files.
+  - Post-download actions: open file or show in file explorer.
+  - Proper URL normalization to handle API base path removal.
+
+### Changed
+
+- **Problem View:** Attachment section with dedicated download buttons (⬇) for each attachment.
+- **API Client:** Improved error handling for attachment downloads with specific messages for 403 (Permission denied) and 404 (Not found) errors.

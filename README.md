@@ -19,6 +19,7 @@ This extension allows you to browse problemsets (contests/homework), view proble
   - Expand problemsets to see included problems.
   - Click on a problem in the Tree View to open its description, examples, and details in a separate tab (Webview).
   - Use the `ACMOJ: View Problem by ID...` command to quickly open any problem.
+  - **Attachment Support:** Download problem attachments directly from the problem view with proper authentication.
 - **Code Submission:** Submit code directly from your active editor using the `ACMOJ: Submit Current File` command (available in Command Palette and editor title bar).
 - **Submission Tracking:** View your recent submissions in a dedicated Tree View, including status, language, and time. Status icons provide quick feedback.
 - **Result Details:** Click on a submission to view detailed results, resource usage, judge messages, and your submitted code in a Webview.
@@ -50,7 +51,7 @@ Problemset Tree View with joined contests and homework assignments.
 1.  **Generate a Personal Access Token (PAT):**
     - Log in to the ACMOJ website.
     - Navigate to your user settings (usually top-right corner menu) and find the "API" section.
-    - Generate a new Personal Access Token. **Crucially, ensure you grant it the necessary scopes** (e.g., `user:profile`, `problem:read`, `submission:read`, `submission:create`, `problemset:read`). Copy the generated token (it often looks like `acmoj-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`).
+    - Generate a new Personal Access Token. **Crucially, ensure you grant it the necessary scopes** (e.g., `user:profile`, `problem:read`, `submission:read`, `submission:create`, `problemset:read`). For downloading problem attachments, ensure your token has sufficient permissions to access problem resources. Copy the generated token (it often looks like `acmoj-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`).
 2.  **Set the Token in VS Code:**
     - Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`).
     - Run the command `ACMOJ: Set Personal Access Token`.
@@ -72,6 +73,11 @@ Problemset Tree View with joined contests and homework assignments.
 6.  **Checking Submissions:**
     - The "My Submissions" view shows your recent submissions.
     - Click a submission to see its detailed results and code.
+7.  **Downloading Problem Attachments:**
+    - When viewing a problem that has attachments, you'll see an "Attachments" section at the bottom.
+    - Click the download button (⬇) next to any attachment to download it with proper authentication.
+    - Attachments can be downloaded to your workspace folder (`.acmoj/problem-{id}/`) or to a custom location via file dialog.
+    - The download progress is shown with a cancellable notification.
 
 ## Advanced Usage
 
@@ -154,6 +160,7 @@ This extension contributes the following settings (accessible via `File > Prefer
 - `acmoj.apiRequestTimeout`: Timeout in milliseconds for API requests. Default: `15000`
 - `acmoj.submissionMonitorInterval`: Interval in milliseconds for checking submission status updates. Default: `4000`
 - `acmoj.submissionMonitorTimeout`: Maximum time in milliseconds to monitor a submission before timing out. Default: `120000`
+- `acmoj.attachments.downloadLocationMode`: How to handle attachment downloads. Options: `workspace` (download to workspace `.acmoj/problem-{id}/` folder) or `ask` (prompt for location each time). Default: `workspace`
 
 ## Known Issues
 
