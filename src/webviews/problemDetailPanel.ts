@@ -366,7 +366,7 @@ export class ProblemDetailPanel extends BasePanel {
   // --- Attachment download implementation ---
 
   private getPreferredDownloadMode(): 'workspace' | 'ask' {
-    const cfg = vscode.workspace.getConfiguration('onlineJudge')
+    const cfg = vscode.workspace.getConfiguration('acmoj')
     const mode =
       cfg.get<'workspace' | 'ask'>('attachments.downloadLocationMode') ??
       'workspace'
