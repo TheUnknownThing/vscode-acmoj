@@ -130,15 +130,55 @@ export class ProblemDetailPanel extends BasePanel {
   }
 
   private _getProblemHtml(problem: Problem): string {
-    const descriptionHtml = md.render(
-      problem.description || '*No description provided.*',
+    // Safely read attachments from problem without depending on Problem type update
+    const attachments =
+      (
+        problem as unknown as {
+          attachments?: Array<{
+            name: string
+            size_bytes: number
+            url: string
+          }> | null
+        }
+      ).attachments ?? null
+
+    // Replace [attachment]filename[/attachment] with anchor tags, then render via Markdown
+    const renderWithAttachments = (
+      text: string | null | undefined,
+      emptyFallbackMd: string,
+    ): string => {
+      const source = text ?? ''
+      const map = new Map((attachments ?? []).map((a) => [a.name, a]))
+      const replaced = source.replace(
+        /\[attachment\](.*?)\[\/attachment\]/gis,
+        (_m, name: string) => {
+          const key = String(name).trim()
+          const item = map.get(key)
+          if (item) {
+            return `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.name)}</a>`
+          }
+          // If not found, show the plain text name
+          return escapeHtml(key)
+        },
+      )
+      return md.render(replaced || emptyFallbackMd)
+    }
+
+    const descriptionHtml = renderWithAttachments(
+      problem.description,
+      '*No description provided.*',
     )
-    const inputHtml = md.render(problem.input || '*No input format specified.*')
-    const outputHtml = md.render(
-      problem.output || '*No output format specified.*',
+    const inputHtml = renderWithAttachments(
+      problem.input,
+      '*No input format specified.*',
     )
-    const dataRangeHtml = md.render(
-      problem.data_range || '*No data range specified.*',
+    const outputHtml = renderWithAttachments(
+      problem.output,
+      '*No output format specified.*',
+    )
+    const dataRangeHtml = renderWithAttachments(
+      problem.data_range,
+      '*No data range specified.*',
     )
 
     let examplesHtml = ''
@@ -154,7 +194,7 @@ export class ProblemDetailPanel extends BasePanel {
                             ${ex.input ? `<button class="copy-btn copy-to-clipboard" data-content="${escapeHtml(ex.input)}" title="Copy input to clipboard">⎘ Clipboard</button>` : ''}
                         </div>
                         </div>
-                        ${ex.description ? `<div class="example-description">${md.render(ex.description)}</div>` : ''}
+                        ${ex.description ? `<div class="example-description">${renderWithAttachments(ex.description, '')}</div>` : ''}
                         ${
                           ex.input !== undefined && ex.input !== null
                             ? `<h5>Input:</h5><pre><code>${escapeHtml(
@@ -202,6 +242,18 @@ export class ProblemDetailPanel extends BasePanel {
                 `
     }
 
+    const attachmentsSectionHtml =
+      attachments && attachments.length > 0
+        ? `<ul>${attachments
+            .map(
+              (a) =>
+                `<li><a href="${escapeHtml(a.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(
+                  a.name,
+                )}</a> - ${a.size_bytes} bytes</li>`,
+            )
+            .join('')}</ul>`
+        : md.render('*No attachments.*')
+
     const scriptNonce = getNonce()
     const content = `
             <h1>${problem.id}: ${escapeHtml(problem.title)}</h1>
@@ -235,6 +287,11 @@ export class ProblemDetailPanel extends BasePanel {
             <div class="section">
                 <h2>Accepted Languages</h2>
                 <div>${problem.languages_accepted ? escapeHtml(problem.languages_accepted.join(', ')) : 'N/A'}</div>
+            </div>
+
+            <div class="section">
+                <h2>Attachments</h2>
+                <div>${attachmentsSectionHtml}</div>
             </div>
 
             <script nonce="${scriptNonce}">

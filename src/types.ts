@@ -22,6 +22,11 @@ export interface Problem {
   example_output: string | null // old version example
   data_range: string | null
   languages_accepted: Array<string> | null
+  attachments: Array<{
+    name: string
+    size_bytes: number
+    url: string
+  }> | null
   // TODO: ... more fields, I do not care about it now
 }
 
