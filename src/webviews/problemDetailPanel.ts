@@ -3,6 +3,7 @@ import MarkdownIt from 'markdown-it'
 import katexPlugin from '@vscode/markdown-it-katex'
 import { Problem } from '../types'
 import { ProblemService } from '../services/problemService'
+import { ApiClient } from '../core/api'
 import { escapeHtml, getNonce } from '../core/utils'
 import { BasePanel } from './webviewBase'
 
@@ -19,11 +20,13 @@ export class ProblemDetailPanel extends BasePanel {
 
   private readonly problemId: number
   private readonly problemService: ProblemService
+  private readonly apiClient: ApiClient
 
   public static createOrShow(
     extensionUri: vscode.Uri,
     problemId: number,
     problemService: ProblemService,
+    apiClient: ApiClient,
   ) {
     const column = vscode.window.activeTextEditor
       ? vscode.window.activeTextEditor.viewColumn
@@ -54,6 +57,7 @@ export class ProblemDetailPanel extends BasePanel {
       extensionUri,
       problemId,
       problemService,
+      apiClient,
     )
     ProblemDetailPanel.panels.set(problemId, newPanel)
     newPanel._update() // Load content initially
@@ -64,10 +68,12 @@ export class ProblemDetailPanel extends BasePanel {
     extensionUri: vscode.Uri,
     problemId: number,
     problemService: ProblemService,
+    apiClient: ApiClient,
   ) {
     super(panel, extensionUri)
     this.problemId = problemId
     this.problemService = problemService
+    this.apiClient = apiClient
 
     // Add disposal cleanup specific to this panel type
     const originalDispose = this.dispose
@@ -418,13 +424,37 @@ export class ProblemDetailPanel extends BasePanel {
     url: string,
     signal?: AbortSignal,
   ): Promise<Uint8Array> {
-    // Use fetch from the extension host (Node 18+ includes fetch)
-    const res = await fetch(url, { signal })
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status} ${res.statusText}`)
+    // Normalize URL similar to how submission service does it
+    let normalizedUrl = url
+    try {
+      const config = vscode.workspace.getConfiguration('acmoj')
+      const apiBasePath = config.get<string>(
+        'apiBasePath',
+        '/OnlineJudge/api/v1',
+      )
+
+      if (normalizedUrl.startsWith(apiBasePath)) {
+        normalizedUrl = normalizedUrl.slice(apiBasePath.length)
+      }
+
+      normalizedUrl = normalizedUrl.replace(/^\/+/, '')
+    } catch (e) {
+      console.warn(
+        'Failed to normalize attachment URL, using original value:',
+        url,
+        e,
+      )
+      normalizedUrl = url
     }
-    const buf = await res.arrayBuffer()
-    return new Uint8Array(buf)
+
+    const response = await this.apiClient.get<ArrayBuffer>(normalizedUrl, {
+      responseType: 'arraybuffer',
+      timeout: 60000, // 60s timeout, approx 500MB.
+      // TODO: make timeout a configurable option
+      signal,
+    })
+
+    return new Uint8Array(response)
   }
 
   private async downloadAttachment(name: string, url: string): Promise<void> {
@@ -464,36 +494,72 @@ export class ProblemDetailPanel extends BasePanel {
     if (!targetFile) return
 
     // Download with progress and cancellable
-    await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: `Downloading ${name}`,
-        cancellable: true,
-      },
-      async (progress, token) => {
-        progress.report({ message: 'Starting...' })
+    try {
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: `Downloading ${name}`,
+          cancellable: true,
+        },
+        async (progress, token) => {
+          progress.report({ message: 'Starting...' })
 
-        // Wire cancellation
-        const controller = new AbortController()
-        token.onCancellationRequested(() => controller.abort())
+          // Wire cancellation
+          const controller = new AbortController()
+          token.onCancellationRequested(() => controller.abort())
 
-        // Fetch into memory then write via VS Code FS API
-        const content = await this.fetchAsUint8Array(url, controller.signal)
-        progress.report({ message: 'Saving...' })
-        await vscode.workspace.fs.writeFile(targetFile!, content)
+          try {
+            progress.report({ message: 'Downloading...' })
+            // Fetch attachment content directly without caching
+            const content = await this.fetchAsUint8Array(url, controller.signal)
 
-        // Offer actions
-        const action = await vscode.window.showInformationMessage(
-          `Downloaded: ${name}`,
-          'Open File',
-          'Show in Explorer',
-        )
-        if (action === 'Open File') {
-          await vscode.commands.executeCommand('vscode.open', targetFile)
-        } else if (action === 'Show in Explorer') {
-          await vscode.commands.executeCommand('revealInExplorer', targetFile)
-        }
-      },
-    )
+            progress.report({ message: 'Saving...' })
+            await vscode.workspace.fs.writeFile(targetFile!, content)
+
+            // Indicate completion
+            progress.report({ message: 'Complete' })
+          } catch (error: unknown) {
+            let message = 'Unknown error'
+            if (error instanceof Error) {
+              message = error.message
+            }
+            console.error(
+              `Failed to download attachment ${name} from ${url}:`,
+              message,
+            )
+
+            if (error instanceof Error && error.message.includes('403')) {
+              throw new Error('Permission denied to download attachment.')
+            } else if (
+              error instanceof Error &&
+              error.message.includes('404')
+            ) {
+              throw new Error('Attachment not found.')
+            }
+            throw new Error(`Failed to download attachment: ${message}`)
+          }
+        },
+      )
+
+      // Show success message and offer actions after progress completes
+      const action = await vscode.window.showInformationMessage(
+        `Downloaded: ${name}`,
+        'Open File',
+        'Show in Explorer',
+      )
+      if (action === 'Open File') {
+        await vscode.commands.executeCommand('vscode.open', targetFile)
+      } else if (action === 'Show in Explorer') {
+        await vscode.commands.executeCommand('revealInExplorer', targetFile)
+      }
+    } catch (error: unknown) {
+      let message = 'Unknown error'
+      if (error instanceof Error) {
+        message = error.message
+      }
+      vscode.window.showErrorMessage(
+        `Failed to download attachment: ${message}`,
+      )
+    }
   }
 }
